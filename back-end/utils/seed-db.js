@@ -1,7 +1,6 @@
 // Load environment variables from config
 const config = require('../config/config');
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const connectDB = require('../config/db');
 
@@ -204,17 +203,12 @@ const seedDB = async () => {
     
     console.log('Database cleared');
     
-    // Create users with hashed passwords
+    // Create users
     const createdUsers = [];
-    for (const user of users) {
-      // Hash password
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(user.password, salt);
-      
-      // Create user with hashed password
+    for (const user of users) {      
+      // Create user
       const createdUser = await User.create({
-        ...user,
-        password: hashedPassword
+        ...user
       });
       
       createdUsers.push({
