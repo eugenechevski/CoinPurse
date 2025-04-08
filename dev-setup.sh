@@ -9,16 +9,16 @@ NC='\033[0m' # No Color
 echo -e "${GREEN}Setting up CoinPurse local development environment...${NC}"
 
 # Install backend dependencies if node_modules doesn't exist
-if [ ! -d "/Users/eugenechevski/Desktop/CoinPurse/back-end/node_modules" ]; then
+if [ ! -d "./back-end/node_modules" ]; then
     echo -e "${YELLOW}Installing backend dependencies...${NC}"
-    cd /Users/eugenechevski/Desktop/CoinPurse/back-end
+    cd ./back-end
     npm install
 fi
 
 # Install frontend dependencies if node_modules doesn't exist
-if [ ! -d "/Users/eugenechevski/Desktop/CoinPurse/front-end/node_modules" ]; then
+if [ ! -d "./front-end/node_modules" ]; then
     echo -e "${YELLOW}Installing frontend dependencies...${NC}"
-    cd /Users/eugenechevski/Desktop/CoinPurse/front-end
+    cd ./front-end
     npm install
 fi
 
@@ -57,6 +57,6 @@ fi
 # Initialize MongoDB with test data
 echo -e "${YELLOW}Initializing MongoDB with test data...${NC}"
 mongosh --eval "db.getSiblingDB('coinpurse').dropDatabase()" || mongosh --eval "db.getSiblingDB('coinpurse').dropDatabase()"
-cd /Users/eugenechevski/Desktop/CoinPurse/back-end && NODE_ENV=development node utils/seed-db.js
+cd ./back-end && NODE_ENV=development node utils/seed-db.js
 
 echo -e "${GREEN}Development environment setup complete!${NC}"
