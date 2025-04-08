@@ -82,7 +82,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // Logout
-app.post('/api/logout', (req, res) => {
+app.post('/api/auth/logout', (req, res) => {
   res.json({ message: 'Logout successful' });
 });
 
