@@ -66,7 +66,7 @@ app.post('/api/login', async (req, res, next) => {
       message: 'Login successful',
       userID: user.userID,
       firstName: user.firstName,
-      lastName = user.lastName,
+      lastName: user.lastName,
       cashBalance: user.cashBalance
     });
 
@@ -74,6 +74,10 @@ app.post('/api/login', async (req, res, next) => {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Server error' });
   }
+});
+
+app.post('/api/logout', (req, res) => {
+  res.json({ message: 'Logout successful' });
 });
 
 // Update stocks on dashboard (get quotes from Finnhub)
