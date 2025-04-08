@@ -41,6 +41,41 @@ app.get('/', (req, res) => {
   });
 });
 
+// Login
+app.post('/api/login', async (req, res, next) => {
+  // incoming: login, password
+  // outgoing: message, userID, firstName, lastName, cashBalance
+  var error = '';
+  const { login, password } = req.body;
+
+  // verify fields are filled
+  if (!login || !password) {
+    return res.status(400).json({ error: 'Login and password required' });
+  }
+
+  // attempt login
+  try {
+    const user = await User.findOne({ login, password });
+
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid login or password' });
+    }
+
+    // if user is found, return their info
+    res.json({
+      message: 'Login successful',
+      userID: user.userID,
+      firstName: user.firstName,
+      lastName = user.lastName,
+      cashBalance: user.cashBalance
+    });
+
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Update stocks on dashboard (get quotes from Finnhub)
 app.get('/api/quote/:symbol', async (req, res) => {
 
