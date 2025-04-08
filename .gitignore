@@ -140,3 +140,5 @@ dist
 
 # Connection script
 connect-to-prod.sh
+
+*nohup.out*

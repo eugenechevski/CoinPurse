@@ -18,23 +18,6 @@ jobs:
         with:
           node-version: '20'
 
-      # Backend build
-      - name: Install Backend Dependencies
-        run: |
-          cd back-end
-          npm ci
-
-      # Frontend build
-      - name: Install Frontend Dependencies
-        run: |
-          cd front-end
-          npm ci
-      
-      - name: Build Frontend
-        run: |
-          cd front-end
-          npm run build
-      
       # Create a deployment package
       - name: Create deployment package
         run: |
@@ -42,7 +25,7 @@ jobs:
           cp -r back-end/* deployment/backend/
           
           mkdir -p deployment/frontend
-          cp -r front-end/dist/* deployment/frontend/
+          cp -r front-end/* deployment/frontend/
           
       - name: Create SSH key
         run: |
@@ -69,7 +52,11 @@ jobs:
             # Stop existing Node.js process if running
             cd /opt/bitnami/projects/coinpurse/backend
             kill $(pgrep -f "node server.js") || true
-      
+            
+            # Kill 3000 and 5001 ports
+            kill $(lsof -t -i :3000) || true
+            kill $(lsof -t -i :5001) || true
+        
             # Clear deployment directories but preserve .env files
             find /opt/bitnami/projects/coinpurse/backend -mindepth 1 -maxdepth 1 -not -name ".env*" -exec rm -rf {} \;
             find /opt/bitnami/projects/coinpurse/frontend -mindepth 1 -maxdepth 1 -not -name ".env*" -exec rm -rf {} \;
@@ -77,19 +64,16 @@ jobs:
             # Extract new deployment
             tar -xzf /tmp/deployment.tar.gz -C /opt/bitnami/projects/coinpurse
             
-            # Install backend dependencies
-            cd /opt/bitnami/projects/coinpurse/backend
-            npm ci --production
-            
-            # Start the backend as a separate process
-            nohup npm run prod
-   
             # Install frontend dependencies
             cd /opt/bitnami/projects/coinpurse/frontend
-            npm ci --production
- 
-            # Start the frontend
-            nohup npm run prod
+            npm install --production
+            
+            # Install backend dependencies
+            cd /opt/bitnami/projects/coinpurse/backend
+            npm install --production
+
+            # Start pm2
+            npm run start
             
             # Clean up
             rm /tmp/deployment.tar.gz
