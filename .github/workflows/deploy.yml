@@ -17,7 +17,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20'
-          cache: 'npm'
 
       # Backend build
       - name: Install Backend Dependencies
@@ -39,11 +38,11 @@ jobs:
       # Create a deployment package
       - name: Create deployment package
         run: |
-          mkdir -p deployment
-          cp -r back-end deployment/
-          mkdir -p deployment/back-end/public
-          cp -r front-end/dist/* deployment/back-end/public/
-          cp package.json deployment/ || echo "No root package.json"
+          mkdir -p deployment/backend
+          cp -r back-end/* deployment/backend/
+          
+          mkdir -p deployment/frontend
+          cp -r front-end/dist/* deployment/frontend/
           
       - name: Create SSH key
         run: |
@@ -55,35 +54,42 @@ jobs:
         run: |
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
           
-      - name: Deploy to Lightsail
+      - name: Archive deployment
         run: |
           # Compress deployment package
           tar -czf deployment.tar.gz -C deployment .
           
-          # Deploy files to server
+      - name: Upload files to server
+        run: |
+          # Upload deployment files
           scp -i ~/.ssh/lightsail.pem deployment.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
           
           # Extract and setup on server
           ssh -i ~/.ssh/lightsail.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            # Stop existing service if needed
-            pm2 stop coinpurse-api || true
-            
-            # Clear deployment directory
-            rm -rf /opt/coinpurse
-            mkdir -p /opt/coinpurse
+            # Stop existing Node.js process if running
+            cd /opt/bitnami/projects/coinpurse/backend
+            kill $(pgrep -f "node server.js") || true
+      
+            # Clear deployment directories but preserve .env files
+            find /opt/bitnami/projects/coinpurse/backend -mindepth 1 -maxdepth 1 -not -name ".env*" -exec rm -rf {} \;
+            find /opt/bitnami/projects/coinpurse/frontend -mindepth 1 -maxdepth 1 -not -name ".env*" -exec rm -rf {} \;
             
             # Extract new deployment
-            tar -xzf /tmp/deployment.tar.gz -C /opt/coinpurse
+            tar -xzf /tmp/deployment.tar.gz -C /opt/bitnami/projects/coinpurse
             
-            # Install dependencies
-            cd /opt/coinpurse/back-end
+            # Install backend dependencies
+            cd /opt/bitnami/projects/coinpurse/backend
             npm ci --production
             
-            # Configure environment variables
-            cp /opt/env-files/coinpurse/.env .
-            
-            # Start the application with PM2
-            pm2 start server.js --name coinpurse-api
+            # Start the backend as a separate process
+            nohup npm run prod
+   
+            # Install frontend dependencies
+            cd /opt/bitnami/projects/coinpurse/frontend
+            npm ci --production
+ 
+            # Start the frontend
+            nohup npm run prod
             
             # Clean up
             rm /tmp/deployment.tar.gz

@@ -1,0 +1,13 @@
+
+> coinpurse-backend@1.0.0 prod
+> NODE_ENV=production nodemon server.js
+
+[33m[nodemon] 3.1.9[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): *.*[39m
+[33m[nodemon] watching extensions: js,mjs,cjs,json[39m
+[32m[nodemon] starting `node server.js`[39m
+Environment: production
+Connecting to MongoDB Atlas...
+Server running in production mode on port 5001
+MongoDB Connected: cluster0-shard-00-01.8rzij.mongodb.net

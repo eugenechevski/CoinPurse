@@ -37,7 +37,7 @@ module.exports = {
   FINNHUB_API_KEY: process.env.FINNHUB_API_KEY,
   
   // Client settings
-  CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
+  CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:3000',
   
   // Determine if we're in production
   isProduction: NODE_ENV === 'production',

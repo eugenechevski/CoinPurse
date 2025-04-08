@@ -4,9 +4,10 @@
   "description": "Backend for CoinPurse investment portfolio tracker",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "nodemon server.js",
+    "stop": "nodemon stop",
     "dev": "NODE_ENV=development nodemon server.js",
-    "prod": "NODE_ENV=production node server.js",
+    "prod": "NODE_ENV=production nodemon server.js",
     "seed": "node utils/seed-db.js",
     "seed:dev": "NODE_ENV=development node utils/seed-db.js",
     "seed:prod": "NODE_ENV=production node utils/seed-db.js",
