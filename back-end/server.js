@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const config = require('./config/config');
 const connectDB = require('./config/db');
+const bcrypt = require('bcryptjs');
 
 // Connect to MongoDB
 connectDB();
@@ -42,10 +43,9 @@ app.get('/', (req, res) => {
 });
 
 // Login
-app.post('/api/login', async (req, res, next) => {
+app.post('/api/auth/login', async (req, res) => {
   // incoming: login, password
   // outgoing: message, userID, firstName, lastName, cashBalance
-  var error = '';
   const { login, password } = req.body;
 
   // verify fields are filled
@@ -61,6 +61,11 @@ app.post('/api/login', async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid login or password' });
     }
 
+    // bcrypt for password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid login or password' });
+    }
     // if user is found, return their info
     res.json({
       message: 'Login successful',
@@ -76,6 +81,7 @@ app.post('/api/login', async (req, res, next) => {
   }
 });
 
+// Logout
 app.post('/api/logout', (req, res) => {
   res.json({ message: 'Logout successful' });
 });
