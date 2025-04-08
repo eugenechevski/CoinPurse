@@ -1,0 +1,30 @@
+{
+  "name": "coinpurse-backend",
+  "version": "1.0.0",
+  "description": "Backend for CoinPurse investment portfolio tracker",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "NODE_ENV=development nodemon server.js",
+    "prod": "NODE_ENV=production node server.js",
+    "seed": "node utils/seed-db.js",
+    "seed:dev": "NODE_ENV=development node utils/seed-db.js",
+    "seed:prod": "NODE_ENV=production node utils/seed-db.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.1",
+    "mongodb": "^6.15.0",
+    "nodemon": "^3.1.9",
+    "uuid": "^9.0.1",
+    "axios": "^1.6.2"
+  }
+}
