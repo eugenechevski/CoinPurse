@@ -1,47 +1,49 @@
-import { Routes, Route } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import LandingPage from './components/LandingPage';
+import Login from './components/Login';
+import Register from './components/Register';
+import Search from './components/Search';
 
-// Import pages (to be created)
-// import Dashboard from './pages/Dashboard';
-// import Login from './pages/Login';
-// import Register from './pages/Register';
-// import Profile from './pages/Profile';
-// import StockDetail from './pages/StockDetail';
-// import NotFound from './pages/NotFound';
+// ProtectedRoute component to handle authentication
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const isAuthenticated = localStorage.getItem('user_data') !== null;
 
-// Protected route component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  return <>{children}</>;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+
+  return children;
 };
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Routes>
-        {/* Public routes */}
-        <Route path="/login" element={<div>Login Page (Coming Soon)</div>} />
-        <Route path="/register" element={<div>Register Page (Coming Soon)</div>} />
-        
-        {/* Protected routes */}
-        <Route path="/" element={
-          <ProtectedRoute>
-            <div>Dashboard (Coming Soon)</div>
-          </ProtectedRoute>
-        } />
-        <Route path="/profile" element={
-          <ProtectedRoute>
-            <div>Profile Page (Coming Soon)</div>
-          </ProtectedRoute>
-        } />
-        <Route path="/stocks/:symbol" element={
-          <ProtectedRoute>
-            <div>Stock Detail Page (Coming Soon)</div>
-          </ProtectedRoute>
-        } />
-        
-        {/* 404 route */}
-        <Route path="*" element={<div>404 Not Found</div>} />
-      </Routes>
-    </div>
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/search" element={
+        <ProtectedRoute>
+          <Search />
+        </ProtectedRoute>
+      } />
+      {/* Add routes for portfolio and wallet when those components are created */}
+      <Route path="/portfolio" element={
+        <ProtectedRoute>
+          <div className="min-h-screen bg-black text-white flex items-center justify-center">
+            <p>Portfolio page will be implemented by your teammate.</p>
+          </div>
+        </ProtectedRoute>
+      } />
+      <Route path="/wallet" element={
+        <ProtectedRoute>
+          <div className="min-h-screen bg-black text-white flex items-center justify-center">
+            <p>Wallet page will be implemented by your teammate.</p>
+          </div>
+        </ProtectedRoute>
+      } />
+      <Route path="*" element={<Navigate to="/" />} />
+    </Routes>
   );
 }
 

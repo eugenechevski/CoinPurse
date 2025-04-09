@@ -2,62 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom component classes */
 @layer components {
   .btn {
     @apply px-4 py-2 rounded font-medium focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-colors;
   }
-
   .btn-primary {
     @apply btn bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
   }
-
   .btn-secondary {
     @apply btn bg-secondary-200 text-secondary-800 hover:bg-secondary-300 focus:ring-secondary-400;
   }
-
   .btn-danger {
     @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
   }
-
   .card {
     @apply bg-white rounded-lg shadow-md p-6;
   }
-
   .form-input {
     @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500;
   }
-
   .form-label {
     @apply block text-sm font-medium text-gray-700 mb-1;
   }
-
   .form-error {
     @apply mt-1 text-sm text-red-600;
   }
 }
 
+/* Root variables and base styles */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
   background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
 }
 
 body {
@@ -66,6 +50,19 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  background-color: #000;
+  color: #fff;
+}
+
+/* Element styles */
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: #535bf2;
 }
 
 h1 {
@@ -84,22 +81,27 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
 button:hover {
   border-color: #646cff;
 }
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+/* Light theme preferences */
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
     background-color: #ffffff;
   }
+
   a:hover {
     color: #747bff;
   }
+
   button {
     background-color: #f9f9f9;
   }
