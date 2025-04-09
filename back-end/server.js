@@ -55,14 +55,14 @@ app.post('/api/auth/login', async (req, res) => {
 
   // attempt login
   try {
-    const user = await User.findOne({ login, password });
+    const user = await User.findOne({ login });
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid login or password' });
     }
 
     // bcrypt for password
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await user.comparePassword(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ error: 'Invalid login or password' });
     }
@@ -84,7 +84,7 @@ app.post('/api/auth/login', async (req, res) => {
 // Add User
 app.post('/api/auth/addUser', async (req, res) => {
   try {
-    // incoming: login, password, firstName, lastName
+    // incoming: login, password, firstName, lastName, email
     // outgoing: login, password
     const { login, password, firstName, lastName, email } = req.body;
 
@@ -93,22 +93,33 @@ app.post('/api/auth/addUser', async (req, res) => {
       return res.status(400).json({ error: 'First Name, Last Name, Login, and Password are required to add a new user' });
     }
 
-    if (User.findOne(email)) {
+    const emailCheckUser = await User.findOne({email});
+    if (emailCheckUser) {
       return res.status(400).json({ error: 'Already a user with that email'})
+    }
+
+    const loginCheckUser = await User.findOne({login});
+    if (loginCheckUser) {
+      return res.status(400).json({ error: 'Already a user with that login'})
     }
 
     // Generate UserID with current date plus random number
     const userID = `user_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
     // Create new User and return
-    const newUser = new User({
+    const newUser = await User.create({
       login,
       password,
       firstName,
       lastName, 
       email,
       userID
-    }) 
+    }); 
+
+    res.json({
+      message: "user created successfully",
+      userID: newUser.userID
+    })
 
   } catch (error) {
     console.error('Error adding user:', error);
@@ -136,8 +147,8 @@ app.post('/api/auth/removeUser', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    await User.deleteOne( userID );
-    await Stock.deleteMany( userID );
+    await User.deleteOne({ userID });
+    await Stock.deleteMany({ userID });
 
     res.status(200).json({ message: 'User and associated Stocks deleted successfully'});
 
@@ -159,15 +170,23 @@ app.post('/api/auth/updateBalance', async (req, res) => {
       return res.status(400).json({ error: 'userID and transaction amount are required to update cash balance' });
     }
 
-    const user = await User.findOne({ userID });
+    let user = await User.findOne({ userID });
 
     if ( !user ) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    user.cashBalance = user.cashBalance + transactionAmount;
+    const curUser = await User.findOne({ userID });
+    curUser.cashBalance = curUser.cashBalance + transactionAmount;
+    await curUser.save();
+    // const newBalance = curUser.cashBalance + transactionAmount;
+    // await User.updateOne({ userID, cashBalance: newBalance });
 
-    res.status(200).json({ message: 'User and associated Stocks deleted successfully'});
+
+    res.status(200).json({ 
+      message: 'User balance updated successfully',
+      newBalance: curUser.cashBalance
+    });
 
   } catch (error) {
     console.error('Error updating user:', error);
@@ -320,18 +339,18 @@ app.post('/api/auth/searchPortfolio', async (req, res) => {
 });
 
 // Search for a New Stock
-app.post('/api/auth/SearchNewStock', async (req, res) => {
+app.post('/api/auth/searchNewStock', async (req, res) => {
   try {
     // incoming: search query
     // outgoing: list of stocks
 
     let { query } = req.body;
 
-    query = req.params.query.toLowerCase();
+    query = req.params.query;
     const apiKey = config.FINNHUB_API_KEY
 
     // get quote data from finnhub
-    const response = await fetch(`https://finnhub.io/api/v1/search?q=${symbol}&exchange=US&token=${apiKey}`);
+    const response = await fetch(`https://finnhub.io/api/v1/search?q=${query}&token=${apiKey}`);
     const data = await response.json();
     res.json(data);
 
