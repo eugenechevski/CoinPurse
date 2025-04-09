@@ -22,6 +22,13 @@ const userSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  email: {
+    type: String,
+    required: true,
+    trim: true,
+    unique: true,
+    sparse: true
+  },
   userID: {
     type: String,
     required: true,
@@ -30,12 +37,6 @@ const userSchema = new mongoose.Schema({
   cashBalance: {
     type: Number,
     default: 0.00
-  },
-  email: {
-    type: String,
-    trim: true,
-    unique: true,
-    sparse: true
   },
   createdAt: {
     type: Date,
