@@ -6,10 +6,10 @@ const fs = require('fs');
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Path to the base .env file
-const basePath = path.resolve(__dirname, '../.env');
+const basePath = path.resolve(__dirname, '../../.env');
 
 // Path to the environment-specific .env file
-const envPath = path.resolve(__dirname, `../.env.${NODE_ENV}`);
+const envPath = path.resolve(__dirname, `../../.env.${NODE_ENV}`);
 
 // Load the base .env file
 dotenv.config({ path: basePath });

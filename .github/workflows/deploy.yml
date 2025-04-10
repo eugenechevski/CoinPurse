@@ -17,28 +17,14 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20'
-
-      # Create a deployment package
-      - name: Create deployment package
+            
+      # Build frontend
+      - name: Install and build frontend
         run: |
-          mkdir -p deployment/backend
-          cd back-end
-          cp -r config/* ../deployment/backend/
-          cp -r utils/* ../deployment/backend/
-          cp -r server.js ../deployment/backend/
-          cp -r package.json ../deployment/backend/
-          cp -r ecosystem.config.js ../deployment/backend/
-          mkdir -p ../deployment/frontend
-          cd ../front-end
-          cp -r public/* ../deployment/frontend/
-          cp -r src/* ../deployment/frontend/
-          cp -r eslint.config.js ../deployment/frontend/
-          cp -r index.html ../deployment/frontend/
-          cp -r package.json ../deployment/frontend/
-          cp -r postcss.config.js ../deployment/frontend/
-          cp -r tailwind.config.js ../deployment/frontend/
-          cp -r tsconfig*.json ../deployment/frontend/
-          cp -r vite.config.ts ../deployment/frontend/
+          cd front-end
+          npm install vite --no-save
+          npm install
+          npm run build
           
       - name: Create SSH key
         run: |
@@ -49,52 +35,37 @@ jobs:
       - name: Add host key to known_hosts
         run: |
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
-          
-      - name: Archive deployment
-        run: |
-          # Compress deployment package
-          tar -czf deployment.tar.gz -C deployment .
-          
+            
       - name: Upload files to server
-        run: |
-          # Upload deployment files
-          scp -i ~/.ssh/lightsail.pem deployment.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
-          
-          # Extract and setup on server
-          ssh -i ~/.ssh/lightsail.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            # Stop existing pm2 processes
+        run: |  
+          # Upload frontend dist folder (built files)
+          scp -i ~/.ssh/lightsail.pem -r front-end/dist front-end/package.json ${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}:/opt/bitnami/projects/coinpurse/front-end/
+  
+          # Upload backend files
+          scp -i ~/.ssh/lightsail.pem -r back-end/server.js back-end/package.json back-end/ecosystem.config.js back-end/src ${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}:/opt/bitnami/projects/coinpurse/back-end
+           
+          # Connect to server and install dependencies
+          ssh -i ~/.ssh/lightsail.pem ${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}} << 'EOF'
+            # Navigate to backend directory
             cd /opt/bitnami/projects/coinpurse/back-end
+
+            # Stop pm2 processes
             npm run stop
-            cd ..            
-            
-            # Extract new deployment
-            sudo tar -xzf /tmp/deployment.tar.gz -C .
-            
-            # Replace backend files
-            mv deployment/backend/* back-end/
-
-            # Replace frontend files
-            mv deployment/frontend/* front-end/
-            
-            # Reinstall dependencies
-            cd back-end
+             
+            # Install dependencies
+            echo "Installing backend dependencies..."
             rm -rf node_modules package-lock.json
             npm install --production
-            cd ..
-
-            cd front-end
+  
+            # Navigate to frontend directory
+            cd ../front-end
+            echo "Installing frontend dependencies..."
             rm -rf node_modules package-lock.json
             npm install --production
-
-            # Start pm2
+  
+            # Start pm2 processes
             cd ../back-end
+            echo "Starting backend..."
             npm run start
-            
-            # Clean up
-            cd ..
-            rm -rf deployment
-            rm /tmp/deployment.tar.gz
           EOF
-
-      - name: Cleanup
-        run: rm -rf ~/.ssh/lightsail.pem 
+          

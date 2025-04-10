@@ -1,14 +1,15 @@
 {
-  "name": "coinpurse-frontend",
+  "name": "coinpurse-front",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite --mode development",
     "prod": "vite --mode production",
-    "build": "tsc -b && vite build --mode production",
+    "build": "npx vite build --mode production",
     "build:dev": "tsc -b && vite build --mode development",
     "preview": "vite preview",
+    "serve": "serve -s dist",
     "lint": "eslint ."
   },
   "dependencies": {

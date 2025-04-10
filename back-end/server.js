@@ -1,9 +1,8 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const config = require("./config/config");
-const connectDB = require("./config/db");
-const bcrypt = require("bcryptjs");
+const config = require("./src/config/config");
+const connectDB = require("./src/config/db");
 
 // Connect to MongoDB
 connectDB();
@@ -30,8 +29,8 @@ app.use((req, res, next) => {
 
 // Routes
 // TODO: Add routes here
-const User = require("./models/User");
-const Stock = require("./models/Stock");
+const User = require("./src/models/User");
+const Stock = require("./src/models/Stock");
 
 // Basic route for testing
 app.get("/", (req, res) => {
