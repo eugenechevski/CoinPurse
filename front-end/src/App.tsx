@@ -1,9 +1,10 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import Register from './components/Register';
 import Search from './components/Search';
+import Portfolio from './components/Portfolio';
+import Wallet from './components/Wallet';
 
 // ProtectedRoute component to handle authentication
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -27,19 +28,14 @@ function App() {
           <Search />
         </ProtectedRoute>
       } />
-      {/* Add routes for portfolio and wallet when those components are created */}
       <Route path="/portfolio" element={
         <ProtectedRoute>
-          <div className="min-h-screen bg-black text-white flex items-center justify-center">
-            <p>Portfolio page will be implemented by your teammate.</p>
-          </div>
+          <Portfolio />
         </ProtectedRoute>
       } />
       <Route path="/wallet" element={
         <ProtectedRoute>
-          <div className="min-h-screen bg-black text-white flex items-center justify-center">
-            <p>Wallet page will be implemented by your teammate.</p>
-          </div>
+          <Wallet />
         </ProtectedRoute>
       } />
       <Route path="*" element={<Navigate to="/" />} />
