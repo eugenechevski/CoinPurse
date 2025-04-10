@@ -22,10 +22,23 @@ jobs:
       - name: Create deployment package
         run: |
           mkdir -p deployment/backend
-          cp -r back-end/* deployment/backend/
-          
-          mkdir -p deployment/frontend
-          cp -r front-end/* deployment/frontend/
+          cd back-end
+          cp -r config/* ../deployment/backend/
+          cp -r utils/* ../deployment/backend/
+          cp -r server.js ../deployment/backend/
+          cp -r package.json ../deployment/backend/
+          cp -r ecosystem.config.js ../deployment/backend/
+          mkdir -p ../deployment/frontend
+          cd ../front-end
+          cp -r public/* ../deployment/frontend/
+          cp -r src/* ../deployment/frontend/
+          cp -r eslint.config.js ../deployment/frontend/
+          cp -r index.html ../deployment/frontend/
+          cp -r package.json ../deployment/frontend/
+          cp -r postcss.config.js ../deployment/frontend/
+          cp -r tailwind.config.js ../deployment/frontend/
+          cp -r tsconfig*.json ../deployment/frontend/
+          cp -r vite.config.ts ../deployment/frontend/
           
       - name: Create SSH key
         run: |
@@ -49,33 +62,37 @@ jobs:
           
           # Extract and setup on server
           ssh -i ~/.ssh/lightsail.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            # Stop existing Node.js process if running
-            cd /opt/bitnami/projects/coinpurse/backend
-            kill $(pgrep -f "node server.js") || true
-            
-            # Kill 3000 and 5001 ports
-            kill $(lsof -t -i :3000) || true
-            kill $(lsof -t -i :5001) || true
-        
-            # Clear deployment directories but preserve .env files
-            find /opt/bitnami/projects/coinpurse/backend -mindepth 1 -maxdepth 1 -not -name ".env*" -exec rm -rf {} \;
-            find /opt/bitnami/projects/coinpurse/frontend -mindepth 1 -maxdepth 1 -not -name ".env*" -exec rm -rf {} \;
+            # Stop existing pm2 processes
+            cd /opt/bitnami/projects/coinpurse/back-end
+            npm run stop
+            cd ..            
             
             # Extract new deployment
-            tar -xzf /tmp/deployment.tar.gz -C /opt/bitnami/projects/coinpurse
+            sudo tar -xzf /tmp/deployment.tar.gz -C .
             
-            # Install frontend dependencies
-            cd /opt/bitnami/projects/coinpurse/frontend
+            # Replace backend files
+            mv deployment/backend/* back-end/
+
+            # Replace frontend files
+            mv deployment/frontend/* front-end/
+            
+            # Reinstall dependencies
+            cd back-end
+            rm -rf node_modules package-lock.json
             npm install --production
-            
-            # Install backend dependencies
-            cd /opt/bitnami/projects/coinpurse/backend
+            cd ..
+
+            cd front-end
+            rm -rf node_modules package-lock.json
             npm install --production
 
             # Start pm2
+            cd ../back-end
             npm run start
             
             # Clean up
+            cd ..
+            rm -rf deployment
             rm /tmp/deployment.tar.gz
           EOF
 
