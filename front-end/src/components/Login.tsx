@@ -7,28 +7,42 @@ function Login() {
 
   async function doLogin(event: React.FormEvent): Promise<void> {
     event.preventDefault();
+
     const obj = { login: loginName, password: loginPassword };
     const js = JSON.stringify(obj);
 
     try {
-      const response = await fetch('http://localhost:5001/api/login', {
+      // Updated to match the actual API endpoint from the server code
+      const response = await fetch('http://localhost:5001/api/auth/login', {
         method: 'POST',
         body: js,
         headers: { 'Content-Type': 'application/json' }
       });
 
-      const res = JSON.parse(await response.text());
-      if (res.id <= 0) {
-        setMessage('User/Password combination incorrect');
-      } else {
-        const user = { firstName: res.firstName, lastName: res.lastName, id: res.id }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Login failed');
+      }
+
+      const res = await response.json();
+
+      // Update to match the API response structure
+      if (res.userID) {
+        const user = {
+          firstName: res.firstName,
+          lastName: res.lastName,
+          id: res.userID,
+          cashBalance: res.cashBalance
+        };
+
         localStorage.setItem('user_data', JSON.stringify(user));
         setMessage('');
         window.location.href = '/portfolio';
+      } else {
+        setMessage('Login failed. Please try again.');
       }
     } catch (error: any) {
-      setMessage(error.toString());
-      return;
+      setMessage(error.message || error.toString());
     }
   };
 
