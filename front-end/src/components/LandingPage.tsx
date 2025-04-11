@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Banner from './Banner'
 
 function LandingPage() {
   return (
@@ -14,6 +15,9 @@ function LandingPage() {
           </div>
         </div>
       </nav>
+      <div className="w-full bg-gray-800 py-2">
+        <Banner />
+      </div>
 
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-20">
