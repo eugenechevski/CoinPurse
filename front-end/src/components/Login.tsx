@@ -7,32 +7,51 @@ function Login() {
 
   async function doLogin(event: React.FormEvent): Promise<void> {
     event.preventDefault();
+    setMessage('');
 
     const obj = { login: loginName, password: loginPassword };
     const js = JSON.stringify(obj);
 
     try {
-      // Updated to match the actual API endpoint from the server code
+      console.log('Attemting to login with: ', { loginName, url: import.meta.env.VITE_API_URL + '/api/auth/login' });
+
       const response = await fetch(import.meta.env.VITE_API_URL + '/api/auth/login', {
         method: 'POST',
         body: js,
         headers: { 'Content-Type': 'application/json' }
       });
 
+      console.log('Response status: ', response.status);
+      const rawText = await response.text();
+      console.log('Raw response text:', rawText);
+      if (!rawText) {
+        setMessage('Empty response from server');
+        return;
+      }
+
+      let data;
+      try {
+        data = JSON.parse(rawText);
+        console.log('Parsed response:', data);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        setMessage('Server returned invalid data. Please try again later.');
+        return;
+      }
+
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Login failed');
       }
 
-      const res = await response.json();
 
-      // Update to match the API response structure
-      if (res.userID) {
+      if (data.userID) {
         const user = {
-          firstName: res.firstName,
-          lastName: res.lastName,
-          id: res.userID,
-          cashBalance: res.cashBalance
+          firstName: data.firstName,
+          lastName: data.lastName,
+          id: data.userID,
+          cashBalance: data.cashBalance
         };
 
         localStorage.setItem('user_data', JSON.stringify(user));
@@ -41,7 +60,7 @@ function Login() {
       } else {
         setMessage('Login failed. Please try again.');
       }
-    } catch (error: any) { //FIXME:I don't want to see this 'any' error
+    } catch (error: any) {
       setMessage(error.message || error.toString());
     }
   };
