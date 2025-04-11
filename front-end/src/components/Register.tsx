@@ -5,6 +5,7 @@ function Register() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [loginName, setLoginName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -20,12 +21,13 @@ function Register() {
       firstName: firstName,
       lastName: lastName,
       login: loginName,
+      email: email,
       password: password
     };
     const js = JSON.stringify(obj);
 
     try {
-      const response = await fetch('http://localhost:5001/api/register', {
+      const response = await fetch(import.meta.env.VITE_API_URL + '/api/auth/addUser', {
         method: 'POST',
         body: js,
         headers: { 'Content-Type': 'application/json' }
@@ -40,6 +42,7 @@ function Register() {
         setFirstName('');
         setLastName('');
         setLoginName('');
+        setEmail('');
         setPassword('');
         setConfirmPassword('');
       }
@@ -106,6 +109,21 @@ function Register() {
                 onChange={(e) => setLoginName(e.target.value)}
                 className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="johndoe"
+                required
+              />
+            </div>
+
+            <div className="mb-4">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-400 mb-1">
+                Email Address
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="john.doe@example.com"
                 required
               />
             </div>

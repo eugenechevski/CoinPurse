@@ -13,7 +13,7 @@ function Login() {
 
     try {
       // Updated to match the actual API endpoint from the server code
-      const response = await fetch('http://localhost:5001/api/auth/login', {
+      const response = await fetch(import.meta.env.VITE_API_URL + '/api/auth/login', {
         method: 'POST',
         body: js,
         headers: { 'Content-Type': 'application/json' }
@@ -41,7 +41,7 @@ function Login() {
       } else {
         setMessage('Login failed. Please try again.');
       }
-    } catch (error: any) {
+    } catch (error: any) { //FIXME:I don't want to see this 'any' error
       setMessage(error.message || error.toString());
     }
   };

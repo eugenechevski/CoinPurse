@@ -54,7 +54,6 @@ app.post("/api/auth/login", async (req, res) => {
 
   // attempt login
   try {
-    
     const user = await User.findOne({ login });
 
     if (!user) {
@@ -81,7 +80,7 @@ app.post("/api/auth/login", async (req, res) => {
 });
 
 // Add User
-app.post('/api/auth/addUser', async (req, res) => {
+app.post("/api/auth/addUser", async (req, res) => {
   try {
     // incoming: login, password, firstName, lastName, email
     // outgoing: login, password
@@ -89,17 +88,22 @@ app.post('/api/auth/addUser', async (req, res) => {
 
     // verify fields are filled
     if (!login || !password || !firstName || !lastName || !email) {
-      return res.status(400).json({ error: 'First Name, Last Name, Login, and Password are required to add a new user' });
+      return res
+        .status(400)
+        .json({
+          error:
+            "First Name, Last Name, Login, and Password are required to add a new user",
+        });
     }
 
-    const emailCheckUser = await User.findOne({email});
+    const emailCheckUser = await User.findOne({ email });
     if (emailCheckUser) {
-      return res.status(400).json({ error: 'Already a user with that email'})
+      return res.status(400).json({ error: "Already a user with that email" });
     }
 
-    const loginCheckUser = await User.findOne({login});
+    const loginCheckUser = await User.findOne({ login });
     if (loginCheckUser) {
-      return res.status(400).json({ error: 'Already a user with that login'})
+      return res.status(400).json({ error: "Already a user with that login" });
     }
 
     // Generate UserID with current date plus random number
@@ -110,24 +114,23 @@ app.post('/api/auth/addUser', async (req, res) => {
       login,
       password,
       firstName,
-      lastName, 
+      lastName,
       email,
-      userID
-    }); 
+      userID,
+    });
 
     res.json({
       message: "user created successfully",
-      userID: newUser.userID
-    })
-
+      userID: newUser.userID,
+    });
   } catch (error) {
-    console.error('Error adding user:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Error adding user:", error);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
 // Remove User
-app.post('/api/auth/removeUser', async (req, res) => {
+app.post("/api/auth/removeUser", async (req, res) => {
   try {
     // can change to be based on login and password
 
@@ -136,43 +139,51 @@ app.post('/api/auth/removeUser', async (req, res) => {
     const { userID } = req.body;
 
     // verify fields are filled
-    if (!userID ) {
-      return res.status(400).json({ error: 'userID is required to remove user' });
+    if (!userID) {
+      return res
+        .status(400)
+        .json({ error: "userID is required to remove user" });
     }
 
     const deletedUser = await User.findOne({ userID });
 
-    if ( !deletedUser ) {
-      return res.status(404).json({ error: 'User not found' });
+    if (!deletedUser) {
+      return res.status(404).json({ error: "User not found" });
     }
 
     await User.deleteOne({ userID });
     await Stock.deleteMany({ userID });
 
-    res.status(200).json({ message: 'User and associated Stocks deleted successfully'});
-
+    res
+      .status(200)
+      .json({ message: "User and associated Stocks deleted successfully" });
   } catch (error) {
-    console.error('Error removing user:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Error removing user:", error);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
 // Update User Balance
-app.post('/api/auth/updateBalance', async (req, res) => {
+app.post("/api/auth/updateBalance", async (req, res) => {
   try {
     // incoming: userID, deposit / withdrawal amount
     // outgoing: message
     const { userID, transactionAmount } = req.body;
 
     // verify fields are filled
-    if (!userID || !transactionAmount ) {
-      return res.status(400).json({ error: 'userID and transaction amount are required to update cash balance' });
+    if (!userID || !transactionAmount) {
+      return res
+        .status(400)
+        .json({
+          error:
+            "userID and transaction amount are required to update cash balance",
+        });
     }
 
     let user = await User.findOne({ userID });
 
-    if ( !user ) {
-      return res.status(404).json({ error: 'User not found' });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
     }
 
     const curUser = await User.findOne({ userID });
@@ -181,15 +192,13 @@ app.post('/api/auth/updateBalance', async (req, res) => {
     // const newBalance = curUser.cashBalance + transactionAmount;
     // await User.updateOne({ userID, cashBalance: newBalance });
 
-
-    res.status(200).json({ 
-      message: 'User balance updated successfully',
-      newBalance: curUser.cashBalance
+    res.status(200).json({
+      message: "User balance updated successfully",
+      newBalance: curUser.cashBalance,
     });
-
   } catch (error) {
-    console.error('Error updating user:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Error updating user:", error);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -303,7 +312,7 @@ app.post("/api/stocks/update", async (req, res) => {
 });
 
 // Search User's Portfolio for a Stock
-app.post('/api/auth/searchPortfolio', async (req, res) => {
+app.post("/api/auth/searchPortfolio", async (req, res) => {
   try {
     // incoming: userID, symbol
     // outgoing: moneyInvested, unitsOwned, purchaseHistory
@@ -311,13 +320,13 @@ app.post('/api/auth/searchPortfolio', async (req, res) => {
     const { userID, symbol } = req.body;
 
     if (!userID || !symbol) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return res.status(400).json({ error: "Missing required fields" });
     }
 
     // verify user exists
     const user = await User.findOne({ userID });
     if (!user) {
-      return res.status(404).json({ error: 'Invalid userID'});
+      return res.status(404).json({ error: "Invalid userID" });
     }
 
     const stock = await Stock.findOne({ userID, symbol });
@@ -325,23 +334,23 @@ app.post('/api/auth/searchPortfolio', async (req, res) => {
       return res.status(200).json({
         moneyInvested: 0,
         unitsOwned: 0,
-        purchaseHistory: null
-      })
+        purchaseHistory: null,
+      });
     } else {
       return res.status(200).json({
         moneyInvested: stock.moneyInvested,
         unitsOwned: stock.unitsOwned,
-        purchaseHistory: stock.purchaseHistory
+        purchaseHistory: stock.purchaseHistory,
       });
     }
   } catch (error) {
-    console.error('Error searching for stock', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Error searching for stock", error);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
 // Search for a New Stock
-app.post('/api/auth/searchNewStock', async (req, res) => {
+app.post("/api/auth/searchNewStock", async (req, res) => {
   try {
     // incoming: search query
     // outgoing: list of stocks
@@ -349,16 +358,17 @@ app.post('/api/auth/searchNewStock', async (req, res) => {
     let { query } = req.body;
 
     query = req.params.query;
-    const apiKey = config.FINNHUB_API_KEY
+    const apiKey = config.FINNHUB_API_KEY;
 
     // get quote data from finnhub
-    const response = await fetch(`https://finnhub.io/api/v1/search?q=${query}&token=${apiKey}`);
+    const response = await fetch(
+      `https://finnhub.io/api/v1/search?q=${query}&token=${apiKey}`,
+    );
     const data = await response.json();
     res.json(data);
-
   } catch (error) {
-    console.error('Error updating user:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Error updating user:", error);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
