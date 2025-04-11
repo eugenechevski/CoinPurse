@@ -23,6 +23,7 @@ jobs:
         run: |
           cd front-end
           npm install vite --no-save
+          echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" > .env
           npm install
           npm run build
           

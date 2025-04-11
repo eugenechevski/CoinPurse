@@ -67,8 +67,6 @@ function Register() {
     }
   };
 
-  console.log(import.meta.env.VITE_API_URL);
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white">
       <div className="w-full max-w-md">
