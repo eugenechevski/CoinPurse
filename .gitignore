@@ -142,3 +142,4 @@ dist
 connect-to-prod.sh
 
 *nohup.out*
+.DS_Store
