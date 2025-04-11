@@ -33,7 +33,7 @@ const User = require("./src/models/User");
 const Stock = require("./src/models/Stock");
 
 // Basic route for testing
-app.get("/", (req, res) => {
+app.get("/api/test", (req, res) => {
   res.json({
     message: "Welcome to CoinPurse API",
     environment: config.NODE_ENV,
