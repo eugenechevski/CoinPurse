@@ -13,7 +13,7 @@ function Login() {
     const js = JSON.stringify(obj);
 
     try {
-      console.log('Attemting to login with: ', { loginName, url: import.meta.env.VITE_API_URL + '/api/auth/login' });
+      // console.log('Attemting to login with: ', { loginName, url: import.meta.env.VITE_API_URL + '/api/auth/login' });
 
       const response = await fetch(import.meta.env.VITE_API_URL + '/api/auth/login', {
         method: 'POST',
@@ -32,7 +32,7 @@ function Login() {
       let data;
       try {
         data = JSON.parse(rawText);
-        console.log('Parsed response:', data);
+        // console.log('Parsed response:', data);
       } catch (parseError) {
         console.error('JSON parse error:', parseError);
         setMessage('Server returned invalid data. Please try again later.');

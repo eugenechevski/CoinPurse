@@ -46,6 +46,21 @@ function Register() {
         setPassword('');
         setConfirmPassword('');
       }
+      if (res.userID) {
+        const user = {
+          firstName: res.firstName,
+          lastName: res.lastName,
+          id: res.userID,
+          cashBalance: res.cashBalance
+        };
+
+        localStorage.setItem('user_data', JSON.stringify(user));
+        setMessage('');
+        window.location.href = '/portfolio';
+      } else {
+        setMessage('Login failed. Please try again.');
+      }
+
     } catch (error: any) {
       setMessage(error.toString());
       return;
