@@ -1,12 +1,33 @@
-import React, { useState } from 'react';
+// Form with improved event handling
+const handleSubmit = (e: React.FormEvent) => {
+  console.log("Form submitted");
+  handleSearch(e);
+}; import React, { useState, useEffect } from 'react';
+import HotList from './HotList';
 
 interface StockData {
   symbol: string;
-  name: string;
-  price: number;
-  change: number;
-  marketCap?: string;
-  volume?: number;
+  description?: string;
+  displaySymbol?: string;
+  type?: string;
+}
+
+interface StockQuote {
+  c: number;  // Current price
+  d: number;  // Change
+  dp: number; // Percent change
+  h: number;  // High price of the day
+  l: number;  // Low price of the day
+  o: number;  // Open price of the day
+  pc: number; // Previous close price
+  companyName?: string; // Company name (might be added by our backend)
+}
+
+interface PortfolioStock {
+  symbol: string;
+  moneyInvested: number;
+  unitsOwned: number;
+  purchaseHistory: any[];
 }
 
 function Search() {
@@ -14,45 +35,353 @@ function Search() {
   const [results, setResults] = useState<StockData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [quotes, setQuotes] = useState<Record<string, StockQuote>>({});
+  const [selectedStock, setSelectedStock] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [portfolioData, setPortfolioData] = useState<PortfolioStock | null>(null);
 
-  // Sample stock data for demonstration
-  const sampleStocks: StockData[] = [
-    { symbol: 'AAPL', name: 'Apple Inc.', price: 180.95, change: 2.30 },
-    { symbol: 'MSFT', name: 'Microsoft Corporation', price: 340.67, change: -1.20 },
-    { symbol: 'GOOGL', name: 'Alphabet Inc.', price: 138.21, change: 0.87 },
-    { symbol: 'AMZN', name: 'Amazon.com Inc.', price: 178.35, change: 3.40 },
-    { symbol: 'TSLA', name: 'Tesla, Inc.', price: 248.50, change: -5.60 },
-    { symbol: 'META', name: 'Meta Platforms Inc.', price: 435.75, change: 7.25 },
-    { symbol: 'NVDA', name: 'NVIDIA Corporation', price: 950.02, change: 15.75 },
-    { symbol: 'BRK.B', name: 'Berkshire Hathaway Inc.', price: 392.14, change: -0.36 },
-  ];
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-
+  // Get user data from local storage
+  const getUserData = () => {
+    const userData = localStorage.getItem('user_data');
+    if (!userData) return null;
     try {
-      // In a real app, this would be an API call
-      // For now, we'll filter the sample data
-      setTimeout(() => {
-        const filteredResults = sampleStocks.filter(stock =>
-          stock.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          stock.name.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-
-        setResults(filteredResults);
-        setIsLoading(false);
-      }, 500); // Simulating API delay
+      return JSON.parse(userData);
     } catch (err) {
-      setError('An error occurred while searching. Please try again.');
-      setIsLoading(false);
+      return null;
     }
   };
 
-  const handleAddToPortfolio = (symbol: string) => {
-    // This would handle adding the stock to user's portfolio
-    alert(`${symbol} has been added to your portfolio!`);
+  const user = getUserData();
+
+
+
+  useEffect(() => {
+    if (selectedStock && user) {
+      fetchPortfolioStock(selectedStock);
+    }
+  }, [selectedStock]);
+
+
+
+  const fetchPortfolioStock = async (symbol: string) => {
+    if (!user) return;
+
+    try {
+      const obj = { userID: user.id, symbol: symbol };
+      const js = JSON.stringify(obj);
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/searchPortfolio`, {
+        method: 'POST',
+        body: js,
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const rawText = await response.text();
+
+      try {
+        const data = JSON.parse(rawText);
+        setPortfolioData(data);
+      } catch (parseError) {
+        setError('Error parsing portfolio data');
+      }
+    } catch (err) {
+      setError('Error fetching portfolio data');
+    }
+  };
+
+  // Debug function to track search execution
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Search submitted with term:", searchTerm);
+    if (!searchTerm.trim()) return;
+
+    setIsLoading(true);
+    setError('');
+    setResults([]);
+    setQuotes({});
+
+    try {
+      console.log("Preparing API call...");
+      const obj = { query: searchTerm };
+      const js = JSON.stringify(obj);
+
+      // Use a hardcoded API URL for debugging if needed
+      const apiUrl = import.meta.env.VITE_API_URL || "https://api.example.com"; // Fallback for debugging
+      console.log("Using API URL:", apiUrl);
+
+      const response = await fetch(`${apiUrl}/api/auth/searchNewStock`, {
+        method: 'POST',
+        body: js,
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      console.log("API response received");
+      const rawText = await response.text();
+      console.log("Raw response:", rawText.substring(0, 100) + "..."); // Log first 100 chars
+
+      try {
+        const data = JSON.parse(rawText);
+        console.log("Parsed data:", data);
+
+        if (data.result && Array.isArray(data.result)) {
+          console.log("Found results:", data.result.length);
+          setResults(data.result);
+
+          if (data.result.length > 0) {
+            const symbols = data.result.slice(0, 10).map((stock: StockData) => stock.symbol);
+            console.log("Fetching quotes for symbols:", symbols);
+            fetchQuotes(symbols);
+          }
+        } else {
+          console.log("No results found or invalid format");
+          setResults([]);
+        }
+      } catch (parseError) {
+        console.error("Parse error:", parseError);
+        setError('Error parsing search results');
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
+      setError('An error occurred while searching. Please try again.');
+    } finally {
+      setIsLoading(false);
+      console.log("Search completed");
+    }
+  };
+
+  const fetchQuotes = async (symbols: string[]) => {
+    console.log("fetchQuotes called with symbols:", symbols);
+    const apiUrl = import.meta.env.VITE_API_URL || "https://api.example.com"; // Fallback for debugging
+
+    const quotePromises = symbols.map(symbol =>
+      fetch(`${apiUrl}/api/quote/${symbol}`)
+        .then(res => {
+          console.log(`Response for ${symbol}:`, res.status);
+          return res.text();
+        })
+        .then(text => {
+          try {
+            return JSON.parse(text);
+          } catch (err) {
+            console.error(`Error parsing quote for ${symbol}:`, err);
+            return null;
+          }
+        })
+        .catch((err) => {
+          console.error(`Error fetching quote for ${symbol}:`, err);
+          return null;
+        })
+    );
+
+    try {
+      const quoteResults = await Promise.all(quotePromises);
+      console.log("Quote results received:", quoteResults);
+      const newQuotes: Record<string, StockQuote> = {};
+
+      symbols.forEach((symbol, index) => {
+        if (quoteResults[index]) {
+          const quote = quoteResults[index];
+          if (quote) {
+            // Ensure all necessary properties exist
+            if (quote.c == null) quote.c = 0;
+            if (quote.d == null) quote.d = 0;
+            if (quote.dp == null) quote.dp = 0;
+            if (quote.h == null) quote.h = 0;
+            if (quote.l == null) quote.l = 0;
+            if (quote.o == null) quote.o = 0;
+            if (quote.pc == null) quote.pc = 0;
+
+            newQuotes[symbol] = quote;
+          }
+        }
+      });
+
+      console.log("Setting quotes:", newQuotes);
+      setQuotes(prev => ({ ...prev, ...newQuotes }));
+    } catch (err) {
+      console.error("Error in fetchQuotes:", err);
+    }
+  };
+
+  const handleBuyStock = async (symbol: string) => {
+    if (!user) {
+      alert('Please log in to buy stocks');
+      window.location.href = '/login';
+      return;
+    }
+
+    setSelectedStock(symbol);
+
+    const stockQuote = quotes[symbol];
+    if (!stockQuote || stockQuote.c == null) {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/quote/${symbol}`);
+        const rawText = await response.text();
+
+        try {
+          const data = JSON.parse(rawText);
+
+          // Check if the data has the expected properties
+          if (data && (data.c == null || data.d == null)) {
+            // Add default values if properties are missing
+            if (data.c == null) data.c = 0;
+            if (data.d == null) data.d = 0;
+            if (data.dp == null) data.dp = 0;
+          }
+
+          setQuotes(prev => ({ ...prev, [symbol]: data }));
+        } catch (parseError) {
+          setError('Could not parse quote data');
+        }
+      } catch (err) {
+        setError('Could not fetch current price for this stock');
+      }
+    }
+  };
+
+  const confirmPurchase = async () => {
+    if (!selectedStock || !quotes[selectedStock] || !user) return;
+
+    try {
+      const stockPrice = quotes[selectedStock].c || 0;
+      const totalCost = stockPrice * quantity;
+
+      const obj = {
+        userID: user.id,
+        symbol: selectedStock,
+        action: 'buy',
+        units: quantity,
+        price: stockPrice
+      };
+
+      const js = JSON.stringify(obj);
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/stocks/update`, {
+        method: 'POST',
+        body: js,
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const rawText = await response.text();
+
+      try {
+        const data = JSON.parse(rawText);
+
+        if (data.error) {
+          setError(data.error);
+        } else {
+          // Update user's cash balance in localStorage
+          const updatedUser = { ...user, cashBalance: data.user.cashBalance };
+          localStorage.setItem('user_data', JSON.stringify(updatedUser));
+
+          // Success message and reset
+          alert(`Successfully purchased ${quantity} shares of ${selectedStock} for $${totalCost.toFixed(2)}`);
+          setQuantity(1);
+          setSelectedStock(null);
+
+          // Refresh portfolio data
+          if (selectedStock) {
+            fetchPortfolioStock(selectedStock);
+          }
+        }
+      } catch (parseError) {
+        setError('Error processing purchase');
+      }
+    } catch (err) {
+      setError('An error occurred while making the purchase');
+    }
+  };
+
+  // Function to render the TradingView widget when a stock is selected
+  const renderTradingViewWidget = () => {
+    if (!selectedStock) return null;
+
+    return (
+      <div className="w-full h-96 bg-gray-900 rounded-lg overflow-hidden mt-4">
+        <HotList />
+      </div>
+    );
+  };
+
+  const renderBuyPanel = () => {
+    if (!selectedStock || !quotes[selectedStock] || quotes[selectedStock].c == null) return null;
+
+    const quote = quotes[selectedStock];
+    const currentPrice = quote.c || 0;
+    const totalCost = currentPrice * quantity;
+    const userBalance = user ? user.cashBalance : 0;
+    const canAfford = userBalance >= totalCost;
+
+    return (
+      <div className="bg-gray-900 p-6 rounded-lg mt-6">
+        <h3 className="text-xl font-semibold mb-4">Buy {selectedStock}</h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <div className="mb-4">
+              <p className="text-gray-400 mb-1">Current Price</p>
+              <p className="text-2xl font-bold">${currentPrice.toFixed(2)}</p>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-gray-400 mb-1">Day Change</p>
+              <p className={`text-lg font-medium ${(quote.d || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                ${(quote.d || 0).toFixed(2)} ({(quote.dp || 0).toFixed(2)}%)
+              </p>
+            </div>
+
+            {portfolioData && (
+              <div className="mb-4">
+                <p className="text-gray-400 mb-1">Your Position</p>
+                <p className="text-lg font-medium">
+                  {portfolioData.unitsOwned} shares (${portfolioData.moneyInvested.toFixed(2)})
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div className="mb-4">
+              <label htmlFor="quantity" className="block text-sm font-medium text-gray-400 mb-1">
+                Quantity
+              </label>
+              <input
+                type="number"
+                id="quantity"
+                min="1"
+                step="1"
+                value={quantity}
+                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+
+            <div className="mb-4">
+              <p className="text-gray-400 mb-1">Total Cost</p>
+              <p className="text-xl font-bold">${totalCost.toFixed(2)}</p>
+
+              {user && (
+                <p className={`text-sm mt-1 ${canAfford ? 'text-green-500' : 'text-red-500'}`}>
+                  {canAfford
+                    ? `Available: $${userBalance.toFixed(2)}`
+                    : `Insufficient funds. You need $${(totalCost - userBalance).toFixed(2)} more.`}
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={confirmPurchase}
+              disabled={!canAfford || !user}
+              className={`w-full py-3 px-4 rounded-md text-white font-medium transition duration-200 
+                ${canAfford ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 cursor-not-allowed'}`}
+            >
+              {user ? 'Confirm Purchase' : 'Login to Buy'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -75,12 +404,15 @@ function Search() {
         <div className="mb-10">
           <h2 className="text-3xl font-bold mb-8">Search Stocks</h2>
 
-          <form onSubmit={handleSearch} className="mb-6">
+          <form onSubmit={handleSubmit} className="mb-6">
             <div className="flex">
               <input
                 type="text"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  console.log("Search input changed:", e.target.value);
+                  setSearchTerm(e.target.value);
+                }}
                 placeholder="Search by company name or symbol"
                 className="flex-grow p-4 bg-gray-800 border border-gray-700 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500"
               />
@@ -93,6 +425,7 @@ function Search() {
             </div>
           </form>
 
+          {/* Search Results Section */}
           {isLoading && (
             <div className="text-center py-8">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
@@ -106,8 +439,11 @@ function Search() {
             </div>
           )}
 
+          {selectedStock && renderTradingViewWidget()}
+          {selectedStock && renderBuyPanel()}
+
           {!isLoading && results.length > 0 && (
-            <div className="bg-gray-900 rounded-lg overflow-hidden">
+            <div className="bg-gray-900 rounded-lg overflow-hidden mt-6">
               <table className="w-full">
                 <thead>
                   <tr className="bg-gray-800 text-left">
@@ -122,14 +458,22 @@ function Search() {
                   {results.map((stock) => (
                     <tr key={stock.symbol} className="border-t border-gray-800 hover:bg-gray-800/50">
                       <td className="py-3 px-4 font-medium">{stock.symbol}</td>
-                      <td className="py-3 px-4">{stock.name}</td>
-                      <td className="py-3 px-4">{stock.price.toFixed(2)}</td>
-                      <td className={`py-3 px-4 ${stock.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                        {stock.change > 0 ? '+' : ''}{stock.change.toFixed(2)}
+                      <td className="py-3 px-4">{stock.description || 'N/A'}</td>
+                      <td className="py-3 px-4">
+                        {quotes[stock.symbol] && quotes[stock.symbol].c != null
+                          ? `$${quotes[stock.symbol].c.toFixed(2)}`
+                          : 'Loading...'}
+                      </td>
+                      <td className={`py-3 px-4 ${quotes[stock.symbol] && quotes[stock.symbol].d != null && quotes[stock.symbol].d >= 0
+                        ? 'text-green-500'
+                        : quotes[stock.symbol] && quotes[stock.symbol].d != null ? 'text-red-500' : ''}`}>
+                        {quotes[stock.symbol] && quotes[stock.symbol].d != null
+                          ? `${quotes[stock.symbol].d > 0 ? '+' : ''}${quotes[stock.symbol].d.toFixed(2)}`
+                          : '-'}
                       </td>
                       <td className="py-3 px-4">
                         <button
-                          onClick={() => handleAddToPortfolio(stock.symbol)}
+                          onClick={() => handleBuyStock(stock.symbol)}
                           className="px-4 py-1 bg-green-600 hover:bg-green-700 rounded-md text-sm transition"
                         >
                           Buy
@@ -150,26 +494,11 @@ function Search() {
 
           {!searchTerm && !results.length && (
             <div className="bg-gray-900 p-6 rounded-lg">
-              <h3 className="text-xl font-semibold mb-4">Popular Stocks</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {sampleStocks.slice(0, 4).map((stock) => (
-                  <div key={stock.symbol} className="bg-gray-800 p-4 rounded-md">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-bold">{stock.symbol}</span>
-                      <span className={stock.change >= 0 ? 'text-green-500' : 'text-red-500'}>
-                        {stock.change > 0 ? '+' : ''}{stock.change.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-400 mb-3">{stock.name}</div>
-                    <div className="text-lg font-medium">${stock.price.toFixed(2)}</div>
-                    <button
-                      onClick={() => handleAddToPortfolio(stock.symbol)}
-                      className="mt-3 w-full py-2 bg-green-600 hover:bg-green-700 rounded-md text-sm transition"
-                    >
-                      Add to Portfolio
-                    </button>
-                  </div>
-                ))}
+              <h3 className="text-xl font-semibold mb-4">Trending Stocks</h3>
+
+              {/* TradingView Hotlist Widget */}
+              <div className="bg-gray-800 p-2 rounded-lg overflow-hidden h-96">
+                <HotList />
               </div>
             </div>
           )}
