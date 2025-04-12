@@ -85,7 +85,7 @@ function Register() {
       } else if (res.userID) {
         // User was auto-logged in after registration
         const user = {
-          firstName: firstName, // Use the form values since API doesn't return them
+          firstName: firstName,
           lastName: lastName,
           id: res.userID,
           cashBalance: res.cashBalance || 0
@@ -94,7 +94,10 @@ function Register() {
         debugLog('log', 'User data being stored:', user);
         localStorage.setItem('user_data', JSON.stringify(user));
         debugLog('log', 'Redirecting to portfolio page');
-        window.location.href = '/portfolio';
+        setTimeout(() => {
+          window.location.href = '/portfolio';
+        }, 2000);
+
       } else {
         // Registration successful, but no auto-login
         setMessage('Registration successful! You can now login.');
@@ -106,7 +109,6 @@ function Register() {
         setPassword('');
         setConfirmPassword('');
 
-        // Optional: Redirect to login page after short delay
         setTimeout(() => {
           window.location.href = '/login';
         }, 2000);
