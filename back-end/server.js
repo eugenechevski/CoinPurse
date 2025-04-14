@@ -323,22 +323,23 @@ app.post("/api/auth/searchPortfolio", async (req, res) => {
     }
 
     const stocks = await Stock.find({
-      userID,
+      userId: _id,
       symbol: { $regex: symbol, $options: 'i' }
     });
 
-    if (stocks.length === 0) {
-      return res.status(200).json([]);
+    const result = stocks.map(stock => ({
+      symbol: stock.symbol,
+      moneyInvested: stock.moneyInvested,
+      unitsOwned: stock.unitsOwned,
+      purchaseHistory: stock.purchaseHistory
+    }));
 
-    } else {
-      const result = stocks.map(stock => ({
-        symbol: stock.symbol,
-        moneyInvested: stock.moneyInvested,
-        unitsOwned: stock.unitsOwned,
-        purchaseHistory: stock.purchaseHistory
-      }));
-      
-    }
+    // const result = {
+    //   symbol: stock.symbol,
+    //   moneyInvested: stock.moneyInvested,
+    //   unitsOwned: stock.unitsOwned,
+    //   purchaseHistory: stock.purchaseHistory
+    // };
 
     return res.status(200).json(result);
 
