@@ -312,8 +312,8 @@ app.post("/api/auth/searchPortfolio", async (req, res) => {
 
     const { _id, symbol } = req.body;
 
-    if (!_id || !symbol) {
-      return res.status(400).json({ error: "Missing required fields" });
+    if (!_id) {
+      return res.status(400).json({ error: "Missing UserID" });
     }
 
     // verify user exists
@@ -322,20 +322,26 @@ app.post("/api/auth/searchPortfolio", async (req, res) => {
       return res.status(404).json({ error: "Invalid user ID" });
     }
 
-    const stock = await Stock.findOne({ userId: _id, symbol });
-    if (!stock) {
-      return res.status(200).json({
-        moneyInvested: 0,
-        unitsOwned: 0,
-        purchaseHistory: null,
-      });
+    const stocks = await Stock.find({
+      userID,
+      symbol: { $regex: symbol, $options: 'i' }
+    });
+
+    if (stocks.length === 0) {
+      return res.status(200).json([]);
+
     } else {
-      return res.status(200).json({
+      const result = stocks.map(stock => ({
+        symbol: stock.symbol,
         moneyInvested: stock.moneyInvested,
         unitsOwned: stock.unitsOwned,
-        purchaseHistory: stock.purchaseHistory,
-      });
+        purchaseHistory: stock.purchaseHistory
+      }));
+      
     }
+
+    return res.status(200).json(result);
+
   } catch (error) {
     console.error("Error searching for stock", error);
     res.status(500).json({ error: "Server error" });
