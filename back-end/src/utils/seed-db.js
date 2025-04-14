@@ -1,7 +1,6 @@
 // Load environment variables from config
 const config = require('../config/config');
 const mongoose = require('mongoose');
-const { v4: uuidv4 } = require('uuid');
 const connectDB = require('../config/db');
 
 // Import models
@@ -22,7 +21,6 @@ const users = [
     password: 'password123',
     firstName: 'Test',
     lastName: 'User',
-    userID: uuidv4(),
     cashBalance: 10000.00,
     email: 'test@example.com'
   },
@@ -31,7 +29,6 @@ const users = [
     password: 'password123',
     firstName: 'John',
     lastName: 'Smith',
-    userID: uuidv4(),
     cashBalance: 25000.00,
     email: 'john@example.com'
   },
@@ -40,21 +37,20 @@ const users = [
     password: 'password123',
     firstName: 'Jane',
     lastName: 'Doe',
-    userID: uuidv4(),
     cashBalance: 15000.00,
     email: 'jane@example.com'
   }
 ];
 
 // Sample stocks data will be generated after users are created
-// We need the userIDs from the created users
+// We need the user IDs from the created users
 const generateStocks = (users) => {
   const stocks = [];
   
   // Test User's stocks
   const testUserStocks = [
     {
-      userID: users[0].userID,
+      userId: users[0]._id,
       symbol: 'AAPL',
       moneyInvested: 2000.00,
       unitsOwned: 10,
@@ -74,7 +70,7 @@ const generateStocks = (users) => {
       ]
     },
     {
-      userID: users[0].userID,
+      userId: users[0]._id,
       symbol: 'MSFT',
       moneyInvested: 1500.00,
       unitsOwned: 5,
@@ -89,7 +85,7 @@ const generateStocks = (users) => {
       ]
     },
     {
-      userID: users[0].userID,
+      userId: users[0]._id,
       symbol: 'TSLA',
       moneyInvested: 1000.00,
       unitsOwned: 4,
@@ -108,7 +104,7 @@ const generateStocks = (users) => {
   // John Smith's stocks
   const johnStocks = [
     {
-      userID: users[1].userID,
+      userId: users[1]._id,
       symbol: 'AMZN',
       moneyInvested: 3200.00,
       unitsOwned: 20,
@@ -123,7 +119,7 @@ const generateStocks = (users) => {
       ]
     },
     {
-      userID: users[1].userID,
+      userId: users[1]._id,
       symbol: 'GOOGL',
       moneyInvested: 2800.00,
       unitsOwned: 20,
@@ -142,7 +138,7 @@ const generateStocks = (users) => {
   // Jane Doe's stocks
   const janeStocks = [
     {
-      userID: users[2].userID,
+      userId: users[2]._id,
       symbol: 'NFLX',
       moneyInvested: 1200.00,
       unitsOwned: 2,
@@ -157,7 +153,7 @@ const generateStocks = (users) => {
       ]
     },
     {
-      userID: users[2].userID,
+      userId: users[2]._id,
       symbol: 'DIS',
       moneyInvested: 1800.00,
       unitsOwned: 15,
@@ -172,7 +168,7 @@ const generateStocks = (users) => {
       ]
     },
     {
-      userID: users[2].userID,
+      userId: users[2]._id,
       symbol: 'SBUX',
       moneyInvested: 1050.00,
       unitsOwned: 10,
