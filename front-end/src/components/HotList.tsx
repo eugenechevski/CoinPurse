@@ -50,10 +50,6 @@ function HotList() {
       link.href = 'https://www.tradingview.com/';
       link.rel = 'noopener nofollow';
       link.target = '_blank';
-      const span = document.createElement('span');
-      span.className = 'blue-text';
-      span.textContent = 'Track all markets on TradingView';
-      link.appendChild(span);
       copyright.appendChild(link);
       container.appendChild(copyright);
 

@@ -1,8 +1,4 @@
-// Form with improved event handling
-const handleSubmit = (e: React.FormEvent) => {
-  console.log("Form submitted");
-  handleSearch(e);
-}; import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import HotList from './HotList';
 
 interface StockData {
@@ -150,9 +146,14 @@ function Search() {
     }
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    console.log("Form submitted");
+    handleSearch(e);
+  };
+
   const fetchQuotes = async (symbols: string[]) => {
     console.log("fetchQuotes called with symbols:", symbols);
-    const apiUrl = import.meta.env.VITE_API_URL || "https://api.example.com"; // Fallback for debugging
+    const apiUrl = import.meta.env.VITE_API_URL || "https://api.example.com";
 
     const quotePromises = symbols.map(symbol =>
       fetch(`${apiUrl}/api/quote/${symbol}`)

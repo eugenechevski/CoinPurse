@@ -88,12 +88,10 @@ app.post("/api/auth/addUser", async (req, res) => {
 
     // verify fields are filled
     if (!login || !password || !firstName || !lastName || !email) {
-      return res
-        .status(400)
-        .json({
-          error:
-            "First Name, Last Name, Login, and Password are required to add a new user",
-        });
+      return res.status(400).json({
+        error:
+          "First Name, Last Name, Login, and Password are required to add a new user",
+      });
     }
 
     const emailCheckUser = await User.findOne({ email });
@@ -136,9 +134,7 @@ app.post("/api/auth/removeUser", async (req, res) => {
 
     // verify fields are filled
     if (!_id) {
-      return res
-        .status(400)
-        .json({ error: "_id is required to remove user" });
+      return res.status(400).json({ error: "_id is required to remove user" });
     }
 
     const deletedUser = await User.findById(_id);
@@ -168,12 +164,9 @@ app.post("/api/auth/updateBalance", async (req, res) => {
 
     // verify fields are filled
     if (!_id || !transactionAmount) {
-      return res
-        .status(400)
-        .json({
-          error:
-            "_id and transaction amount are required to update cash balance",
-        });
+      return res.status(400).json({
+        error: "_id and transaction amount are required to update cash balance",
+      });
     }
 
     let user = await User.findById(_id);
@@ -351,7 +344,7 @@ app.post("/api/auth/searchNewStock", async (req, res) => {
     let { query } = req.body;
 
     query = req.params.query;
-    const apiKey = config.FINNHUB_API_KEY;
+    const apiKey = import.meta.env.VITE_FINNHUB_API_KEY;
 
     // get quote data from finnhub
     const response = await fetch(
