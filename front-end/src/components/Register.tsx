@@ -58,7 +58,7 @@ function Register() {
         setMessage('');
         window.location.href = '/portfolio';
       } else {
-        setMessage('Login failed. Please try again.');
+        setMessage('Registration failed. Please try again.');
       }
 
     } catch (error: any) {
