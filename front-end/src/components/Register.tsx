@@ -82,12 +82,11 @@ function Register() {
       if (res.error) {
         setMessage(res.error);
         setIsLoading(false);
-      } else if (res.userID) {
-        // User was auto-logged in after registration
+      } else if (res._id) {
         const user = {
           firstName: firstName,
           lastName: lastName,
-          id: res.userID,
+          id: res._id,
           cashBalance: res.cashBalance || 0
         };
 
