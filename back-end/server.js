@@ -350,24 +350,34 @@ app.post("/api/auth/searchPortfolio", async (req, res) => {
 });
 
 // Search for a New Stock
+// Search for a New Stock (US only)
 app.post("/api/auth/searchNewStock", async (req, res) => {
   try {
-    // incoming: search query
-    // outgoing: list of stocks
-
-    let { query } = req.body;
-
-    query = req.params.query;
+    const { query } = req.body;
     const apiKey = config.FINNHUB_API_KEY;
 
-    // get quote data from finnhub
+    // Fetch US-listed stock symbols
     const response = await fetch(
-      `https://finnhub.io/api/v1/search?q=${query}&token=${apiKey}`,
+      `https://finnhub.io/api/v1/stock/symbol?exchange=US&token=${apiKey}`
     );
-    const data = await response.json();
-    res.json(data);
+    const allSymbols = await response.json();
+
+    if (!allSymbols || !Array.isArray(allSymbols)) {
+      return res.status(500).json({ error: "Invalid Finnhub response" });
+    }
+
+    const lowerQuery = query.toLowerCase();
+
+    // Filter by symbol or company name match
+    const filtered = allSymbols.filter(stock =>
+      stock.symbol?.toLowerCase().includes(lowerQuery) ||
+      stock.description?.toLowerCase().includes(lowerQuery)
+    );
+
+    // Limit result to top 10 matches (optional)
+    res.json({ result: filtered.slice(0, 10) });
   } catch (error) {
-    console.error("Error updating user:", error);
+    console.error("Error searching for US stock:", error);
     res.status(500).json({ error: "Server error" });
   }
 });
