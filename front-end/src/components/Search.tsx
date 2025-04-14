@@ -393,7 +393,6 @@ function Search() {
           <div className="flex space-x-6">
             <a href="/portfolio" className="hover:text-green-400 transition">Portfolio</a>
             <a href="/search" className="text-green-400">Search</a>
-            <a href="/wallet" className="hover:text-green-400 transition">Wallet</a>
             <a href="/logout" className="hover:text-green-400 transition">Logout</a>
           </div>
         </div>
