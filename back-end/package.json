@@ -11,9 +11,9 @@
     "restart": "pm2 restart ecosystem.config.js",
     "dev": "NODE_ENV=development nodemon server.js",
     "prod": "NODE_ENV=production nodemon server.js",
-    "seed": "node utils/seed-db.js",
-    "seed:dev": "NODE_ENV=development node utils/seed-db.js",
-    "seed:prod": "NODE_ENV=production node utils/seed-db.js",
+    "seed": "node src/utils/seed-db.js",
+    "seed:dev": "NODE_ENV=development node src/utils/seed-db.js",
+    "seed:prod": "NODE_ENV=production node src/utils/seed-db.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

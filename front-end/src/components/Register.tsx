@@ -97,21 +97,9 @@ function Register() {
         setTimeout(() => {
           window.location.href = '/portfolio';
         }, 2000);
-
       } else {
-        // Registration successful, but no auto-login
-        setMessage('Registration successful! You can now login.');
-        // Clear the form
-        setFirstName('');
-        setLastName('');
-        setLoginName('');
-        setEmail('');
-        setPassword('');
-        setConfirmPassword('');
+        setMessage('Registration failed. Please try again.');
 
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 2000);
       }
     } catch (error: any) {
       debugLog('error', 'Registration error:', error);

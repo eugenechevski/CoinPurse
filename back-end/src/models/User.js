@@ -29,11 +29,6 @@ const userSchema = new mongoose.Schema({
     unique: true,
     sparse: true
   },
-  userID: {
-    type: String,
-    required: true,
-    unique: true
-  },
   cashBalance: {
     type: Number,
     default: 0.00

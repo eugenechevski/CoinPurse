@@ -44,7 +44,7 @@ app.get("/api/test", (req, res) => {
 // Login
 app.post("/api/auth/login", async (req, res) => {
   // incoming: login, password
-  // outgoing: message, userID, firstName, lastName, cashBalance
+  // outgoing: message, _id, firstName, lastName, cashBalance
   const { login, password } = req.body;
 
   // verify fields are filled
@@ -68,7 +68,7 @@ app.post("/api/auth/login", async (req, res) => {
     // if user is found, return their info
     res.json({
       message: "Login successful",
-      userID: user.userID,
+      _id: user._id,
       firstName: user.firstName,
       lastName: user.lastName,
       cashBalance: user.cashBalance,
@@ -83,7 +83,7 @@ app.post("/api/auth/login", async (req, res) => {
 app.post("/api/auth/addUser", async (req, res) => {
   try {
     // incoming: login, password, firstName, lastName, email
-    // outgoing: login, password
+    // outgoing: message, _id
     const { login, password, firstName, lastName, email } = req.body;
 
     // verify fields are filled
@@ -106,9 +106,6 @@ app.post("/api/auth/addUser", async (req, res) => {
       return res.status(400).json({ error: "Already a user with that login" });
     }
 
-    // Generate UserID with current date plus random number
-    const userID = `user_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
-
     // Create new User and return
     const newUser = await User.create({
       login,
@@ -116,12 +113,11 @@ app.post("/api/auth/addUser", async (req, res) => {
       firstName,
       lastName,
       email,
-      userID,
     });
 
     res.json({
       message: "user created successfully",
-      userID: newUser.userID,
+      _id: newUser._id,
     });
   } catch (error) {
     console.error("Error adding user:", error);
@@ -134,25 +130,25 @@ app.post("/api/auth/removeUser", async (req, res) => {
   try {
     // can change to be based on login and password
 
-    // incoming: userID
+    // incoming: _id
     // outgoing: message
-    const { userID } = req.body;
+    const { _id } = req.body;
 
     // verify fields are filled
-    if (!userID) {
+    if (!_id) {
       return res
         .status(400)
-        .json({ error: "userID is required to remove user" });
+        .json({ error: "_id is required to remove user" });
     }
 
-    const deletedUser = await User.findOne({ userID });
+    const deletedUser = await User.findById(_id);
 
     if (!deletedUser) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    await User.deleteOne({ userID });
-    await Stock.deleteMany({ userID });
+    await User.findByIdAndDelete(_id);
+    await Stock.deleteMany({ userId: _id });
 
     res
       .status(200)
@@ -166,35 +162,32 @@ app.post("/api/auth/removeUser", async (req, res) => {
 // Update User Balance
 app.post("/api/auth/updateBalance", async (req, res) => {
   try {
-    // incoming: userID, deposit / withdrawal amount
+    // incoming: _id, deposit / withdrawal amount
     // outgoing: message
-    const { userID, transactionAmount } = req.body;
+    const { _id, transactionAmount } = req.body;
 
     // verify fields are filled
-    if (!userID || !transactionAmount) {
+    if (!_id || !transactionAmount) {
       return res
         .status(400)
         .json({
           error:
-            "userID and transaction amount are required to update cash balance",
+            "_id and transaction amount are required to update cash balance",
         });
     }
 
-    let user = await User.findOne({ userID });
+    let user = await User.findById(_id);
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const curUser = await User.findOne({ userID });
-    curUser.cashBalance = curUser.cashBalance + transactionAmount;
-    await curUser.save();
-    // const newBalance = curUser.cashBalance + transactionAmount;
-    // await User.updateOne({ userID, cashBalance: newBalance });
+    user.cashBalance = user.cashBalance + transactionAmount;
+    await user.save();
 
     res.status(200).json({
       message: "User balance updated successfully",
-      newBalance: curUser.cashBalance,
+      newBalance: user.cashBalance,
     });
   } catch (error) {
     console.error("Error updating user:", error);
@@ -229,16 +222,16 @@ app.get("/api/quote/:symbol", async (req, res) => {
 // Update position in stock (buy/sell)
 app.post("/api/stocks/update", async (req, res) => {
   // request fields
-  const { userID, symbol, action, units, price } = req.body;
+  const { _id, symbol, action, units, price } = req.body;
 
   // data check
-  if (!userID || !symbol || !action || !units || !price) {
+  if (!_id || !symbol || !action || !units || !price) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
   try {
     // verify user exists
-    const user = await User.findOne({ userID });
+    const user = await User.findById(_id);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -247,7 +240,7 @@ app.post("/api/stocks/update", async (req, res) => {
     const totalAmount = price * units;
 
     // query the stock we're buying/selling
-    let stock = await Stock.findOne({ userID, symbol });
+    let stock = await Stock.findOne({ userId: _id, symbol });
 
     // buy action
     if (action === "buy") {
@@ -261,7 +254,7 @@ app.post("/api/stocks/update", async (req, res) => {
         // if they don't already own it, create a new one
         // TODO: Do we need to keep track of company name and sector here?
         stock = new Stock({
-          userID,
+          userId: _id,
           symbol,
           moneyInvested: totalAmount,
           unitsOwned: units,
@@ -314,22 +307,22 @@ app.post("/api/stocks/update", async (req, res) => {
 // Search User's Portfolio for a Stock
 app.post("/api/auth/searchPortfolio", async (req, res) => {
   try {
-    // incoming: userID, symbol
+    // incoming: _id, symbol
     // outgoing: moneyInvested, unitsOwned, purchaseHistory
 
-    const { userID, symbol } = req.body;
+    const { _id, symbol } = req.body;
 
-    if (!userID || !symbol) {
+    if (!_id || !symbol) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     // verify user exists
-    const user = await User.findOne({ userID });
+    const user = await User.findById(_id);
     if (!user) {
-      return res.status(404).json({ error: "Invalid userID" });
+      return res.status(404).json({ error: "Invalid user ID" });
     }
 
-    const stock = await Stock.findOne({ userID, symbol });
+    const stock = await Stock.findOne({ userId: _id, symbol });
     if (!stock) {
       return res.status(200).json({
         moneyInvested: 0,

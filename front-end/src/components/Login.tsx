@@ -45,11 +45,11 @@ function Login() {
       }
 
 
-      if (data.userID) {
+      if (data._id) {
         const user = {
           firstName: data.firstName,
           lastName: data.lastName,
-          id: data.userID,
+          id: data._id,
           cashBalance: data.cashBalance
         };
 
