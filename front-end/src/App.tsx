@@ -4,7 +4,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Search from './components/Search';
 import Portfolio from './components/Portfolio';
-import Wallet from './components/Wallet';
+import Account from './components/Account';
 
 // ProtectedRoute component to handle authentication
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -33,9 +33,9 @@ function App() {
           <Portfolio />
         </ProtectedRoute>
       } />
-      <Route path="/wallet" element={
+      <Route path="/account" element={
         <ProtectedRoute>
-          <Wallet />
+          <Account />
         </ProtectedRoute>
       } />
       <Route path="*" element={<Navigate to="/" />} />

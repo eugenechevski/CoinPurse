@@ -3,14 +3,18 @@ import { Link } from 'react-router-dom';
 
 interface Holding {
   ticker: string;
+  shares: number;
   currentPrice: number;
   change: number;
-  shares: number;
 }
 
+/**
+ * AdvancedChart Component
+ * Embeds TradingView's advanced chart widget.
+ */
 const AdvancedChart: React.FC<{ symbol: string }> = ({ symbol }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  // Generate a unique container id per instance.
+  // Generate a unique container id to avoid conflicts when multiple charts are loaded.
   const uniqueId = useRef(`tradingview_${symbol}_${Math.random().toString(36).substr(2, 9)}`);
 
   useEffect(() => {
@@ -19,14 +23,13 @@ const AdvancedChart: React.FC<{ symbol: string }> = ({ symbol }) => {
     }
 
     const loadWidget = () => {
-      // Delay execution briefly to ensure container is fully rendered.
       setTimeout(() => {
         try {
           if ((window as any).TradingView && containerRef.current) {
             new (window as any).TradingView.widget({
               width: "100%",
               height: "600",
-              symbol: `NASDAQ:${symbol}`, // Adjust exchange prefix if needed.
+              symbol: `NASDAQ:${symbol}`, // Adjust the exchange prefix if needed
               interval: "D",
               timezone: "Etc/UTC",
               theme: "dark",
@@ -41,10 +44,9 @@ const AdvancedChart: React.FC<{ symbol: string }> = ({ symbol }) => {
         } catch (e) {
           console.error("Error loading TradingView widget for", symbol, e);
         }
-      }, 100); // 100ms delay
+      }, 100);
     };
 
-    // Load the TradingView script if not already loaded.
     if (!(window as any).TradingView) {
       if (!document.getElementById("tradingview-script")) {
         const script = document.createElement("script");
@@ -65,55 +67,89 @@ const AdvancedChart: React.FC<{ symbol: string }> = ({ symbol }) => {
 const Portfolio: React.FC = () => {
   // Sidebar state.
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  // Track which holding's trade menu is open.
+  const toggleSidebar = () => setSidebarOpen((prev) => !prev);
+
+  // Trade menu state.
   const [tradeAction, setTradeAction] = useState<{ ticker: string; type: 'buy' | 'sell' } | null>(null);
   const [tradeQuantity, setTradeQuantity] = useState<number>(0);
   const [tradeError, setTradeError] = useState<string>('');
   const [tradeLoading, setTradeLoading] = useState<boolean>(false);
 
-  // Placeholder portfolio stats.
+  // Portfolio stats.
   const [totalValue, setTotalValue] = useState(0);
   const [change, setChange] = useState(0);
   const [uninvestedCash, setUninvestedCash] = useState(0);
 
-  // Sample holdings.
-  const [holdings, setHoldings] = useState<Holding[]>([
-    { ticker: 'TSLA', currentPrice: 100.0, change: -10.0, shares: 2 },
-    { ticker: 'AAPL', currentPrice: 150.0, change: 5.0, shares: 4 },
-  ]);
-
-  // Expanded chart state.
+  // Holdings data (will be fetched from API).
+  const [holdings, setHoldings] = useState<Holding[]>([]);
   const [expandedHoldings, setExpandedHoldings] = useState<{ [key: string]: boolean }>({});
 
+  // Base API URL from .env
+  const apiUrl = import.meta.env.VITE_API_URL;
+
+  // Fetch portfolio and update each holding's current price using the quote endpoint.
   useEffect(() => {
-    // Simulate fetching stats.
-    setTimeout(() => {
-      setTotalValue(600.0);
-      setChange(-40.0);
-      setUninvestedCash(200.0);
-    }, 500);
-  }, []);
+    const fetchPortfolio = async () => {
+      try {
+        const portfolioRes = await fetch(`${apiUrl}/api/portfolio`);
+        const portfolioData = await portfolioRes.json();
+        if (portfolioData.holdings && Array.isArray(portfolioData.holdings)) {
+          const updatedHoldings = await Promise.all(
+            portfolioData.holdings.map(async (holding: any) => {
+              try {
+                // Fetch quote data using your Finnhub proxy endpoint.
+                const priceRes = await fetch(`${apiUrl}/api/quote/${holding.ticker}`);
+                const priceData = await priceRes.json();
+                // Finnhub response: 'c' is current price, 'd' is price change.
+                return {
+                  ticker: holding.ticker,
+                  shares: holding.shares,
+                  currentPrice: priceData.c,
+                  change: priceData.d,
+                };
+              } catch (err) {
+                console.error(`Failed to fetch quote for ${holding.ticker}:`, err);
+                // Fall back to stored values if fetching fails.
+                return {
+                  ticker: holding.ticker,
+                  shares: holding.shares,
+                  currentPrice: holding.currentPrice || 0,
+                  change: holding.change || 0,
+                };
+              }
+            })
+          );
+          setHoldings(updatedHoldings);
 
-  const toggleSidebar = () => setSidebarOpen(prev => !prev);
-  const toggleChart = (ticker: string) => setExpandedHoldings(prev => ({ ...prev, [ticker]: !prev[ticker] }));
+          // Simulated portfolio statistics -- in a real app, update these based on detailed data.
+          setTotalValue(600.0);
+          setChange(-40.0);
+          setUninvestedCash(200.0);
+        }
+      } catch (error) {
+        console.error("Error fetching portfolio:", error);
+      }
+    };
 
+    fetchPortfolio();
+  }, [apiUrl]);
+
+  // Functions for the trade menu (buy/sell).
   const openTradeMenu = (ticker: string, type: 'buy' | 'sell') => {
     setTradeAction({ ticker, type });
     setTradeQuantity(0);
     setTradeError('');
   };
-
   const closeTradeMenu = () => {
     setTradeAction(null);
     setTradeQuantity(0);
     setTradeError('');
   };
 
+  // Execute trade using the /api/stocks/update endpoint.
   const executeTrade = async (holding: Holding) => {
     setTradeError('');
-    const apiUrl = import.meta.env.VITE_API_URL;
     const cost = tradeQuantity * holding.currentPrice;
-
     if (tradeAction?.type === 'buy') {
       if (cost > uninvestedCash) {
         setTradeError("Insufficient funds.");
@@ -125,32 +161,50 @@ const Portfolio: React.FC = () => {
         return;
       }
     }
-
     setTradeLoading(true);
+
     try {
-      const endpoint = tradeAction?.type === 'buy' ? "/api/portfolio/buy" : "/api/portfolio/sell";
-      const response = await fetch(`${apiUrl}${endpoint}`, {
+      // Retrieve user data from localStorage (dummy login sets userID).
+      const storedUser = localStorage.getItem('user_data');
+      if (!storedUser) {
+        setTradeError("User not authenticated.");
+        setTradeLoading(false);
+        return;
+      }
+      const user = JSON.parse(storedUser);
+      // Use the userID from your dummy data.
+      const _id = user.userID;
+      
+      const body = {
+        _id,
+        symbol: holding.ticker,
+        action: tradeAction?.type,
+        units: tradeQuantity,
+        price: holding.currentPrice,
+      };
+
+      const response = await fetch(`${apiUrl}/api/stocks/update`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticker: holding.ticker, quantity: tradeQuantity })
+        body: JSON.stringify(body),
       });
       const res = await response.json();
       if (res.error) {
         setTradeError(res.error);
       } else {
-        setHoldings(prev =>
-          prev.map(h => 
-            h.ticker === holding.ticker 
-              ? tradeAction!.type === "buy" 
-                ? { ...h, shares: h.shares + tradeQuantity } 
-                : { ...h, shares: h.shares - tradeQuantity } 
+        // Update holdings: adjust the share count for the holding.
+        setHoldings(prevHoldings =>
+          prevHoldings.map(h =>
+            h.ticker === holding.ticker
+              ? tradeAction!.type === "buy"
+                ? { ...h, shares: h.shares + tradeQuantity }
+                : { ...h, shares: h.shares - tradeQuantity }
               : h
           )
         );
-        if (tradeAction?.type === 'buy') {
-          setUninvestedCash(prev => prev - cost);
-        } else {
-          setUninvestedCash(prev => prev + cost);
+        // Update uninvested cash from the returned user data.
+        if (res.user && res.user.cashBalance !== undefined) {
+          setUninvestedCash(res.user.cashBalance);
         }
         closeTradeMenu();
       }
@@ -160,9 +214,13 @@ const Portfolio: React.FC = () => {
     setTradeLoading(false);
   };
 
+  const toggleChart = (ticker: string) => {
+    setExpandedHoldings(prev => ({ ...prev, [ticker]: !prev[ticker] }));
+  };
+
   return (
     <div className="min-h-screen bg-black text-white relative">
-      {/* Top bar */}
+      {/* Top bar with toggle button */}
       <div className="bg-gray-900 p-4 flex items-center">
         <button onClick={toggleSidebar} className="text-white mr-4 text-2xl focus:outline-none">
           {sidebarOpen ? '✕' : '☰'}
@@ -209,7 +267,7 @@ const Portfolio: React.FC = () => {
         </div>
       )}
 
-      {/* Main Content */}
+      {/* Main Content Area */}
       <div className="container mx-auto px-4 py-8">
         {/* Stats Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">

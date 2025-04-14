@@ -86,7 +86,6 @@ function Search() {
     }
   };
 
-  // Debug function to track search execution
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Search submitted with term:", searchTerm);
@@ -102,14 +101,17 @@ function Search() {
       const obj = { query: searchTerm };
       const js = JSON.stringify(obj);
 
-      // Use a hardcoded API URL for debugging if needed
-      const apiUrl = import.meta.env.VITE_API_URL || "https://api.example.com"; // Fallback for debugging
+      const apiUrl = import.meta.env.VITE_API_URL;
       console.log("Using API URL:", apiUrl);
+
+      console.log("JS:", js)
 
       const response = await fetch(`${apiUrl}/api/auth/searchNewStock`, {
         method: 'POST',
         body: js,
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/json',
+        }
       });
 
       console.log("API response received");
@@ -153,24 +155,24 @@ function Search() {
 
   const fetchQuotes = async (symbols: string[]) => {
     console.log("fetchQuotes called with symbols:", symbols);
-    const apiUrl = import.meta.env.VITE_API_URL || "https://api.example.com";
+    const apiUrl = import.meta.env.VITE_API_URL;
 
     const quotePromises = symbols.map(symbol =>
       fetch(`${apiUrl}/api/quote/${symbol}`)
         .then(res => {
-          console.log(`Response for ${symbol}:`, res.status);
+          console.log(`Response for ${symbol}: `, res.status);
           return res.text();
         })
         .then(text => {
           try {
             return JSON.parse(text);
           } catch (err) {
-            console.error(`Error parsing quote for ${symbol}:`, err);
+            console.error(`Error parsing quote for ${symbol}: `, err);
             return null;
           }
         })
         .catch((err) => {
-          console.error(`Error fetching quote for ${symbol}:`, err);
+          console.error(`Error fetching quote for ${symbol}: `, err);
           return null;
         })
     );
@@ -327,7 +329,7 @@ function Search() {
 
             <div className="mb-4">
               <p className="text-gray-400 mb-1">Day Change</p>
-              <p className={`text-lg font-medium ${(quote.d || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              <p className={`text - lg font - medium ${(quote.d || 0) >= 0 ? 'text-green-500' : 'text-red-500'} `}>
                 ${(quote.d || 0).toFixed(2)} ({(quote.dp || 0).toFixed(2)}%)
               </p>
             </div>
@@ -363,10 +365,10 @@ function Search() {
               <p className="text-xl font-bold">${totalCost.toFixed(2)}</p>
 
               {user && (
-                <p className={`text-sm mt-1 ${canAfford ? 'text-green-500' : 'text-red-500'}`}>
+                <p className={`text - sm mt - 1 ${canAfford ? 'text-green-500' : 'text-red-500'} `}>
                   {canAfford
-                    ? `Available: $${userBalance.toFixed(2)}`
-                    : `Insufficient funds. You need $${(totalCost - userBalance).toFixed(2)} more.`}
+                    ? `Available: $${userBalance.toFixed(2)} `
+                    : `Insufficient funds.You need $${(totalCost - userBalance).toFixed(2)} more.`}
                 </p>
               )}
             </div>
@@ -374,8 +376,8 @@ function Search() {
             <button
               onClick={confirmPurchase}
               disabled={!canAfford || !user}
-              className={`w-full py-3 px-4 rounded-md text-white font-medium transition duration-200 
-                ${canAfford ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 cursor-not-allowed'}`}
+              className={`w - full py - 3 px - 4 rounded - md text - white font - medium transition duration - 200 
+                ${canAfford ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 cursor-not-allowed'} `}
             >
               {user ? 'Confirm Purchase' : 'Login to Buy'}
             </button>
@@ -461,14 +463,15 @@ function Search() {
                       <td className="py-3 px-4">{stock.description || 'N/A'}</td>
                       <td className="py-3 px-4">
                         {quotes[stock.symbol] && quotes[stock.symbol].c != null
-                          ? `$${quotes[stock.symbol].c.toFixed(2)}`
+                          ? `$${quotes[stock.symbol].c.toFixed(2)} `
                           : 'Loading...'}
                       </td>
-                      <td className={`py-3 px-4 ${quotes[stock.symbol] && quotes[stock.symbol].d != null && quotes[stock.symbol].d >= 0
+                      <td className={`py - 3 px - 4 ${quotes[stock.symbol] && quotes[stock.symbol].d != null && quotes[stock.symbol].d >= 0
                         ? 'text-green-500'
-                        : quotes[stock.symbol] && quotes[stock.symbol].d != null ? 'text-red-500' : ''}`}>
+                        : quotes[stock.symbol] && quotes[stock.symbol].d != null ? 'text-red-500' : ''
+                        } `}>
                         {quotes[stock.symbol] && quotes[stock.symbol].d != null
-                          ? `${quotes[stock.symbol].d > 0 ? '+' : ''}${quotes[stock.symbol].d.toFixed(2)}`
+                          ? `${quotes[stock.symbol].d > 0 ? '+' : ''}${quotes[stock.symbol].d.toFixed(2)} `
                           : '-'}
                       </td>
                       <td className="py-3 px-4">
