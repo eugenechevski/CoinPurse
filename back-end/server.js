@@ -218,9 +218,10 @@ app.post("/api/stocks/update", async (req, res) => {
   const { _id, symbol, action, units, price } = req.body;
 
   // data check
-  if (!_id || !symbol || !action || !units || !price) {
+  if (_id == null || symbol == null || action == null || units == null || price == null) {
     return res.status(400).json({ error: "Missing required fields" });
   }
+  
 
   try {
     // verify user exists
@@ -232,8 +233,9 @@ app.post("/api/stocks/update", async (req, res) => {
     // calculate money being moved
     const totalAmount = price * units;
 
-    // query the stock we're buying/selling
-    let stock = await Stock.findOne({ userId: _id, symbol });
+    const mongoose = require('mongoose');
+    const userId = typeof _id === 'string' ? new mongoose.Types.ObjectId(_id) : _id;
+    let stock = await Stock.findOne({ userId: userId, symbol });
 
     // buy action
     if (action === "buy") {
@@ -247,7 +249,7 @@ app.post("/api/stocks/update", async (req, res) => {
         // if they don't already own it, create a new one
         // TODO: Do we need to keep track of company name and sector here?
         stock = new Stock({
-          userId: _id,
+          userId: userId,
           symbol,
           moneyInvested: totalAmount,
           unitsOwned: units,
@@ -255,6 +257,7 @@ app.post("/api/stocks/update", async (req, res) => {
           sector: "Unknown",
           purchaseHistory: [{ date: new Date(), price, units }],
         });
+        
       } else {
         // if they already own it, update existing stock
         stock.moneyInvested += totalAmount;
@@ -292,9 +295,15 @@ app.post("/api/stocks/update", async (req, res) => {
     // add success message
     res.json({ message: `Successfully updated stock position`, stock, user });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
+    console.error("Error saving stock/user:", err.message);
+    if (err.name === 'ValidationError') {
+      for (const field in err.errors) {
+        console.error(`Field: ${field} —`, err.errors[field].message);
+      }
+    }
+    res.status(500).json({ error: err.message });
   }
+  
 });
 
 // Search User's Portfolio for a Stock
