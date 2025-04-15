@@ -64,7 +64,7 @@ function Search() {
     if (!user) return;
 
     try {
-      const obj = { userID: user.id, symbol: symbol };
+      const obj = { _id: user.id, symbol: symbol };
       const js = JSON.stringify(obj);
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/searchPortfolio`, {
@@ -208,6 +208,7 @@ function Search() {
   };
 
   const handleBuyStock = async (symbol: string) => {
+    console.log(symbol)
     if (!user) {
       alert('Please log in to buy stocks');
       window.location.href = '/login';
@@ -251,7 +252,7 @@ function Search() {
       const totalCost = stockPrice * quantity;
 
       const obj = {
-        userID: user.id,
+        _id: user.id,
         symbol: selectedStock,
         action: 'buy',
         units: quantity,
@@ -338,7 +339,7 @@ function Search() {
               <div className="mb-4">
                 <p className="text-gray-400 mb-1">Your Position</p>
                 <p className="text-lg font-medium">
-                  {portfolioData.unitsOwned} shares (${portfolioData.moneyInvested.toFixed(2)})
+                  {portfolioData.unitsOwned} shares (${portfolioData.moneyInvested})
                 </p>
               </div>
             )}
