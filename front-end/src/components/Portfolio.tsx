@@ -14,7 +14,7 @@ interface Holding {
  */
 const AdvancedChart: React.FC<{ symbol: string }> = ({ symbol }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  // Generate a unique container id to avoid conflicts when multiple charts are loaded.
+  // Generate a unique container id to avoid conflicts.
   const uniqueId = useRef(`tradingview_${symbol}_${Math.random().toString(36).substr(2, 9)}`);
 
   useEffect(() => {
@@ -29,7 +29,7 @@ const AdvancedChart: React.FC<{ symbol: string }> = ({ symbol }) => {
             new (window as any).TradingView.widget({
               width: "100%",
               height: "600",
-              symbol: `NASDAQ:${symbol}`, // Adjust the exchange prefix if needed
+              symbol: `NASDAQ:${symbol}`, // Adjust exchange prefix if needed.
               interval: "D",
               timezone: "Etc/UTC",
               theme: "dark",
@@ -65,10 +65,7 @@ const AdvancedChart: React.FC<{ symbol: string }> = ({ symbol }) => {
 };
 
 const Portfolio: React.FC = () => {
-  // Sidebar state.
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const toggleSidebar = () => setSidebarOpen((prev) => !prev);
-
+  // Navigation: using a top nav bar (no sidebar).
   // Trade menu state.
   const [tradeAction, setTradeAction] = useState<{ ticker: string; type: 'buy' | 'sell' } | null>(null);
   const [tradeQuantity, setTradeQuantity] = useState<number>(0);
@@ -80,66 +77,83 @@ const Portfolio: React.FC = () => {
   const [change, setChange] = useState(0);
   const [uninvestedCash, setUninvestedCash] = useState(0);
 
-  // Holdings data (will be fetched from API).
+  // Holdings and chart expansion.
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [expandedHoldings, setExpandedHoldings] = useState<{ [key: string]: boolean }>({});
 
   // Base API URL from .env
   const apiUrl = import.meta.env.VITE_API_URL;
 
-  // Fetch portfolio and update each holding's current price using the quote endpoint.
+  // Get user id from localStorage.
+  const storedUserStr = localStorage.getItem('user_data');
+  const user = storedUserStr ? JSON.parse(storedUserStr) : null;
+  const userId = user ? (user._id || user.id) : null;
+
+  // If no user, you may want to redirect to login.
+
+  // Fetch portfolio using the new API. We assume that sending an empty symbol returns all stocks.
   useEffect(() => {
     const fetchPortfolio = async () => {
+      if (!userId) return;
       try {
-        const portfolioRes = await fetch(`${apiUrl}/api/portfolio`);
-        const portfolioData = await portfolioRes.json();
-        if (portfolioData.holdings && Array.isArray(portfolioData.holdings)) {
-          const updatedHoldings = await Promise.all(
-            portfolioData.holdings.map(async (holding: any) => {
-              try {
-                // Fetch quote data using your Finnhub proxy endpoint.
-                const priceRes = await fetch(`${apiUrl}/api/quote/${holding.ticker}`);
-                const priceData = await priceRes.json();
-                // Finnhub response: 'c' is current price, 'd' is price change.
-                return {
-                  ticker: holding.ticker,
-                  shares: holding.shares,
-                  currentPrice: priceData.c,
-                  change: priceData.d,
-                };
-              } catch (err) {
-                console.error(`Failed to fetch quote for ${holding.ticker}:`, err);
-                // Fall back to stored values if fetching fails.
-                return {
-                  ticker: holding.ticker,
-                  shares: holding.shares,
-                  currentPrice: holding.currentPrice || 0,
-                  change: holding.change || 0,
-                };
-              }
-            })
-          );
-          setHoldings(updatedHoldings);
-
-          // Simulated portfolio statistics -- in a real app, update these based on detailed data.
-          setTotalValue(600.0);
-          setChange(-40.0);
-          setUninvestedCash(200.0);
-        }
+        const res = await fetch(`${apiUrl}/api/auth/searchPortfolio`, {
+          method: 'POST',
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ _id: userId, symbol: "" }),
+        });
+        const portfolio = await res.json();
+        // Portfolio API returns an array of stocks each with at least symbol and unitsOwned.
+        // Transform to our Holding interface.
+        const holdingsRaw: Holding[] = await Promise.all(
+          portfolio.map(async (stock: any) => {
+            try {
+              // Get the latest quote for each stock.
+              const quoteRes = await fetch(`${apiUrl}/api/quote/${stock.symbol}`);
+              const quoteData = await quoteRes.json();
+              return {
+                ticker: stock.symbol,
+                shares: stock.unitsOwned,
+                currentPrice: quoteData.c,
+                change: quoteData.d,
+              };
+            } catch (err) {
+              console.error(`Error fetching quote for ${stock.symbol}:`, err);
+              // Fallback in case of error.
+              return {
+                ticker: stock.symbol,
+                shares: stock.unitsOwned,
+                currentPrice: 0,
+                change: 0,
+              };
+            }
+          })
+        );
+        setHoldings(holdingsRaw);
+        // Optionally: update portfolio stats based on holdings.
+        // For demonstration, we simulate some numbers.
+        setTotalValue(600.0);
+        setChange(0.0);
+        setUninvestedCash(200.0);
       } catch (error) {
         console.error("Error fetching portfolio:", error);
       }
     };
 
     fetchPortfolio();
-  }, [apiUrl]);
+  }, [apiUrl, userId]);
 
-  // Functions for the trade menu (buy/sell).
+  // Toggle chart expansion.
+  const toggleChart = (ticker: string) => {
+    setExpandedHoldings(prev => ({ ...prev, [ticker]: !prev[ticker] }));
+  };
+
+  // Show trade menu.
   const openTradeMenu = (ticker: string, type: 'buy' | 'sell') => {
     setTradeAction({ ticker, type });
     setTradeQuantity(0);
     setTradeError('');
   };
+  // Hide trade menu.
   const closeTradeMenu = () => {
     setTradeAction(null);
     setTradeQuantity(0);
@@ -150,33 +164,25 @@ const Portfolio: React.FC = () => {
   const executeTrade = async (holding: Holding) => {
     setTradeError('');
     const cost = tradeQuantity * holding.currentPrice;
-    if (tradeAction?.type === 'buy') {
-      if (cost > uninvestedCash) {
-        setTradeError("Insufficient funds.");
-        return;
-      }
-    } else if (tradeAction?.type === 'sell') {
-      if (tradeQuantity > holding.shares) {
-        setTradeError("Insufficient shares.");
-        return;
-      }
+
+    if (tradeAction?.type === 'buy' && cost > uninvestedCash) {
+      setTradeError('Insufficient funds.');
+      return;
+    }
+    if (tradeAction?.type === 'sell' && tradeQuantity > holding.shares) {
+      setTradeError('Insufficient shares.');
+      return;
     }
     setTradeLoading(true);
-
     try {
-      // Retrieve user data from localStorage (dummy login sets userID).
-      const storedUser = localStorage.getItem('user_data');
-      if (!storedUser) {
+      if (!userId) {
         setTradeError("User not authenticated.");
         setTradeLoading(false);
         return;
       }
-      const user = JSON.parse(storedUser);
-      // Use the userID from your dummy data.
-      const _id = user.userID;
-      
+
       const body = {
-        _id,
+        _id: userId,
         symbol: holding.ticker,
         action: tradeAction?.type,
         units: tradeQuantity,
@@ -184,17 +190,17 @@ const Portfolio: React.FC = () => {
       };
 
       const response = await fetch(`${apiUrl}/api/stocks/update`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       const res = await response.json();
       if (res.error) {
         setTradeError(res.error);
       } else {
-        // Update holdings: adjust the share count for the holding.
-        setHoldings(prevHoldings =>
-          prevHoldings.map(h =>
+        // Update the corresponding holding's shares.
+        setHoldings(prev =>
+          prev.map(h =>
             h.ticker === holding.ticker
               ? tradeAction!.type === "buy"
                 ? { ...h, shares: h.shares + tradeQuantity }
@@ -202,8 +208,8 @@ const Portfolio: React.FC = () => {
               : h
           )
         );
-        // Update uninvested cash from the returned user data.
-        if (res.user && res.user.cashBalance !== undefined) {
+        // Update cash balance with the returned value from the API.
+        if (res.user && typeof res.user.cashBalance === 'number') {
           setUninvestedCash(res.user.cashBalance);
         }
         closeTradeMenu();
@@ -214,60 +220,22 @@ const Portfolio: React.FC = () => {
     setTradeLoading(false);
   };
 
-  const toggleChart = (ticker: string) => {
-    setExpandedHoldings(prev => ({ ...prev, [ticker]: !prev[ticker] }));
-  };
-
   return (
-    <div className="min-h-screen bg-black text-white relative">
-      {/* Top bar with toggle button */}
-      <div className="bg-gray-900 p-4 flex items-center">
-        <button onClick={toggleSidebar} className="text-white mr-4 text-2xl focus:outline-none">
-          {sidebarOpen ? '✕' : '☰'}
-        </button>
-        <h1 className="text-2xl font-bold">My Portfolio</h1>
-      </div>
-
-      {/* Sidebar overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-20" onClick={toggleSidebar}>
-          <div 
-            className="absolute top-0 left-0 h-full w-64 bg-gray-900 p-4" 
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-end mb-4">
-              <button onClick={toggleSidebar} className="text-white text-2xl focus:outline-none">
-                ✕
-              </button>
-            </div>
-            <nav className="flex flex-col space-y-4">
-              <Link 
-                to="/search" 
-                className="block w-full text-center py-2 rounded bg-gray-800 hover:bg-green-600 transition"
-                onClick={toggleSidebar}
-              >
-                Search
-              </Link>
-              <Link 
-                to="/portfolio" 
-                className="block w-full text-center py-2 rounded bg-gray-800 hover:bg-green-600 transition"
-                onClick={toggleSidebar}
-              >
-                Portfolio
-              </Link>
-              <Link 
-                to="/account" 
-                className="block w-full text-center py-2 rounded bg-gray-800 hover:bg-green-600 transition"
-                onClick={toggleSidebar}
-              >
-                Account
-              </Link>
-            </nav>
+    <div className="min-h-screen bg-black text-white">
+      {/* Top Navigation Bar (copied from the Search page) */}
+      <nav className="bg-gray-900 p-4">
+        <div className="container mx-auto flex justify-between items-center">
+          <h1 className="text-2xl font-bold">CoinPurse</h1>
+          <div className="flex space-x-6">
+            <a href="/portfolio" className="text-green-400">Portfolio</a>
+            <a href="/search" className="hover:text-green-400 transition">Search</a>
+            <a href="/account" className="hover:text-green-400 transition">Account</a>
+            <a href="/logout" className="hover:text-green-400 transition">Logout</a>
           </div>
         </div>
-      )}
+      </nav>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         {/* Stats Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -301,7 +269,7 @@ const Portfolio: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {holdings.map((holding) => (
+              {holdings.map(holding => (
                 <React.Fragment key={holding.ticker}>
                   <tr className="border-t border-gray-800 hover:bg-gray-800/50">
                     <td className="py-3 px-4 font-medium">{holding.ticker}</td>
@@ -320,24 +288,26 @@ const Portfolio: React.FC = () => {
                     </td>
                     <td className="py-3 px-4 space-x-2">
                       <button
-                        onClick={() => openTradeMenu(holding.ticker, "buy")}
+                        onClick={() => openTradeMenu(holding.ticker, 'buy')}
                         className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded-md text-sm transition"
                       >
                         Buy
                       </button>
                       <button
-                        onClick={() => openTradeMenu(holding.ticker, "sell")}
+                        onClick={() => openTradeMenu(holding.ticker, 'sell')}
                         className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-sm transition"
                       >
                         Sell
                       </button>
                     </td>
                   </tr>
+
+                  {/* Inline Trade Menu Row */}
                   {tradeAction && tradeAction.ticker === holding.ticker && (
                     <tr className="border-t border-gray-800 bg-gray-800">
                       <td colSpan={6} className="py-4 px-4">
                         <div className="flex flex-col space-y-2">
-                          {tradeAction.type === "buy" ? (
+                          {tradeAction.type === 'buy' ? (
                             <>
                               <div className="font-semibold">Buy {holding.ticker}</div>
                               <div>Available Funds: ${uninvestedCash.toFixed(2)}</div>
@@ -346,7 +316,7 @@ const Portfolio: React.FC = () => {
                                 <input
                                   type="number"
                                   value={tradeQuantity}
-                                  onChange={(e) => setTradeQuantity(Number(e.target.value))}
+                                  onChange={e => setTradeQuantity(Number(e.target.value))}
                                   className="w-24 p-2 bg-gray-700 rounded"
                                   min={0}
                                 />
@@ -360,7 +330,7 @@ const Portfolio: React.FC = () => {
                                   disabled={tradeLoading}
                                   className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-md text-sm transition"
                                 >
-                                  {tradeLoading ? "Processing..." : "Confirm"}
+                                  {tradeLoading ? 'Processing...' : 'Confirm'}
                                 </button>
                                 <button
                                   onClick={closeTradeMenu}
@@ -378,7 +348,7 @@ const Portfolio: React.FC = () => {
                                 <input
                                   type="number"
                                   value={tradeQuantity}
-                                  onChange={(e) => setTradeQuantity(Number(e.target.value))}
+                                  onChange={e => setTradeQuantity(Number(e.target.value))}
                                   className="w-24 p-2 bg-gray-700 rounded"
                                   min={0}
                                 />
@@ -392,7 +362,7 @@ const Portfolio: React.FC = () => {
                                   disabled={tradeLoading}
                                   className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-md text-sm transition"
                                 >
-                                  {tradeLoading ? "Processing..." : "Confirm"}
+                                  {tradeLoading ? 'Processing...' : 'Confirm'}
                                 </button>
                                 <button
                                   onClick={closeTradeMenu}
@@ -407,6 +377,8 @@ const Portfolio: React.FC = () => {
                       </td>
                     </tr>
                   )}
+
+                  {/* Chart Expansion Row */}
                   {expandedHoldings[holding.ticker] && (
                     <tr className="border-t border-gray-800">
                       <td colSpan={6} className="py-4 px-4">
