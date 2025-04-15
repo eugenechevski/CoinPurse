@@ -237,9 +237,6 @@ app.post("/api/stocks/update", async (req, res) => {
     const userId = typeof _id === 'string' ? new mongoose.Types.ObjectId(_id) : _id;
     let stock = await Stock.findOne({ userId: userId, symbol });
 
-
-
-
     // buy action
     if (action === "buy") {
       // check if they have enough money to buy
