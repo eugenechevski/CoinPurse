@@ -23,13 +23,14 @@ const AdvancedChart: React.FC<{ symbol: string }> = ({ symbol }) => {
     }
 
     const loadWidget = () => {
+      // Delay to ensure container is rendered.
       setTimeout(() => {
         try {
           if ((window as any).TradingView && containerRef.current) {
             new (window as any).TradingView.widget({
               width: "100%",
               height: "600",
-              symbol: `NASDAQ:${symbol}`, // Adjust exchange prefix if needed.
+              symbol: `NASDAQ:${symbol}`, // Adjust as needed.
               interval: "D",
               timezone: "Etc/UTC",
               theme: "dark",
@@ -65,7 +66,6 @@ const AdvancedChart: React.FC<{ symbol: string }> = ({ symbol }) => {
 };
 
 const Portfolio: React.FC = () => {
-  // Navigation: using a top nav bar (no sidebar).
   // Trade menu state.
   const [tradeAction, setTradeAction] = useState<{ ticker: string; type: 'buy' | 'sell' } | null>(null);
   const [tradeQuantity, setTradeQuantity] = useState<number>(0);
@@ -77,11 +77,11 @@ const Portfolio: React.FC = () => {
   const [change, setChange] = useState(0);
   const [uninvestedCash, setUninvestedCash] = useState(0);
 
-  // Holdings and chart expansion.
+  // Holdings and chart expansion states.
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [expandedHoldings, setExpandedHoldings] = useState<{ [key: string]: boolean }>({});
 
-  // Base API URL from .env
+  // Base API URL from .env.
   const apiUrl = import.meta.env.VITE_API_URL;
 
   // Get user id from localStorage.
@@ -89,9 +89,9 @@ const Portfolio: React.FC = () => {
   const user = storedUserStr ? JSON.parse(storedUserStr) : null;
   const userId = user ? (user._id || user.id) : null;
 
-  // If no user, you may want to redirect to login.
+  // If no user, you might want to redirect to login. (Not shown here.)
 
-  // Fetch portfolio using the new API. We assume that sending an empty symbol returns all stocks.
+  // Fetch portfolio holdings from the API.
   useEffect(() => {
     const fetchPortfolio = async () => {
       if (!userId) return;
@@ -99,41 +99,49 @@ const Portfolio: React.FC = () => {
         const res = await fetch(`${apiUrl}/api/auth/searchPortfolio`, {
           method: 'POST',
           headers: { "Content-Type": "application/json" },
+          // Sending an empty symbol returns all of the user's stocks.
           body: JSON.stringify({ _id: userId, symbol: "" }),
         });
-        const portfolio = await res.json();
-        // Portfolio API returns an array of stocks each with at least symbol and unitsOwned.
-        // Transform to our Holding interface.
-        const holdingsRaw: Holding[] = await Promise.all(
-          portfolio.map(async (stock: any) => {
-            try {
-              // Get the latest quote for each stock.
-              const quoteRes = await fetch(`${apiUrl}/api/quote/${stock.symbol}`);
-              const quoteData = await quoteRes.json();
-              return {
-                ticker: stock.symbol,
-                shares: stock.unitsOwned,
-                currentPrice: quoteData.c,
-                change: quoteData.d,
-              };
-            } catch (err) {
-              console.error(`Error fetching quote for ${stock.symbol}:`, err);
-              // Fallback in case of error.
-              return {
-                ticker: stock.symbol,
-                shares: stock.unitsOwned,
-                currentPrice: 0,
-                change: 0,
-              };
-            }
-          })
-        );
-        setHoldings(holdingsRaw);
-        // Optionally: update portfolio stats based on holdings.
-        // For demonstration, we simulate some numbers.
-        setTotalValue(600.0);
-        setChange(0.0);
-        setUninvestedCash(200.0);
+        const portfolioData = await res.json();
+        console.log("Portfolio data:", portfolioData);
+        // Check if the response is an array or an object containing 'holdings'.
+        const portfolioHoldings = Array.isArray(portfolioData)
+          ? portfolioData
+          : portfolioData.holdings || [];
+
+        if (portfolioHoldings.length > 0) {
+          const updatedHoldings = await Promise.all(
+            portfolioHoldings.map(async (stock: any) => {
+              try {
+                // Fetch latest quote data for each stock.
+                const quoteRes = await fetch(`${apiUrl}/api/quote/${stock.symbol}`);
+                const quoteData = await quoteRes.json();
+                // Finnhub: 'c' is current price and 'd' is daily change.
+                return {
+                  ticker: stock.symbol,
+                  shares: stock.unitsOwned, // using unitsOwned from the API.
+                  currentPrice: quoteData.c,
+                  change: quoteData.d,
+                } as Holding;
+              } catch (err) {
+                console.error(`Error fetching quote for ${stock.symbol}:`, err);
+                return {
+                  ticker: stock.symbol,
+                  shares: stock.unitsOwned,
+                  currentPrice: stock.currentPrice || 0,
+                  change: stock.change || 0,
+                } as Holding;
+              }
+            })
+          );
+          setHoldings(updatedHoldings);
+          // For demonstration purposes, simulate stats.
+          setTotalValue(600.0);
+          setChange(0.0);
+          setUninvestedCash(200.0);
+        } else {
+          setHoldings([]);
+        }
       } catch (error) {
         console.error("Error fetching portfolio:", error);
       }
@@ -142,35 +150,35 @@ const Portfolio: React.FC = () => {
     fetchPortfolio();
   }, [apiUrl, userId]);
 
-  // Toggle chart expansion.
+  // Toggle the advanced chart row.
   const toggleChart = (ticker: string) => {
     setExpandedHoldings(prev => ({ ...prev, [ticker]: !prev[ticker] }));
   };
 
-  // Show trade menu.
+  // Open the inline trade menu.
   const openTradeMenu = (ticker: string, type: 'buy' | 'sell') => {
     setTradeAction({ ticker, type });
     setTradeQuantity(0);
     setTradeError('');
   };
-  // Hide trade menu.
+
+  // Close the trade menu.
   const closeTradeMenu = () => {
     setTradeAction(null);
     setTradeQuantity(0);
     setTradeError('');
   };
 
-  // Execute trade using the /api/stocks/update endpoint.
+  // Execute a trade using the API.
   const executeTrade = async (holding: Holding) => {
     setTradeError('');
     const cost = tradeQuantity * holding.currentPrice;
-
     if (tradeAction?.type === 'buy' && cost > uninvestedCash) {
-      setTradeError('Insufficient funds.');
+      setTradeError("Insufficient funds.");
       return;
     }
     if (tradeAction?.type === 'sell' && tradeQuantity > holding.shares) {
-      setTradeError('Insufficient shares.');
+      setTradeError("Insufficient shares.");
       return;
     }
     setTradeLoading(true);
@@ -180,7 +188,6 @@ const Portfolio: React.FC = () => {
         setTradeLoading(false);
         return;
       }
-
       const body = {
         _id: userId,
         symbol: holding.ticker,
@@ -190,15 +197,15 @@ const Portfolio: React.FC = () => {
       };
 
       const response = await fetch(`${apiUrl}/api/stocks/update`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
       const res = await response.json();
       if (res.error) {
         setTradeError(res.error);
       } else {
-        // Update the corresponding holding's shares.
+        // Adjust shares for the holding.
         setHoldings(prev =>
           prev.map(h =>
             h.ticker === holding.ticker
@@ -208,7 +215,7 @@ const Portfolio: React.FC = () => {
               : h
           )
         );
-        // Update cash balance with the returned value from the API.
+        // Update uninvested cash from the returned user data.
         if (res.user && typeof res.user.cashBalance === 'number') {
           setUninvestedCash(res.user.cashBalance);
         }
@@ -222,7 +229,7 @@ const Portfolio: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Top Navigation Bar (copied from the Search page) */}
+      {/* Top Navigation Bar (from Search page style) */}
       <nav className="bg-gray-900 p-4">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold">CoinPurse</h1>
@@ -237,7 +244,7 @@ const Portfolio: React.FC = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
-        {/* Stats Section */}
+        {/* Portfolio Stats Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="bg-gray-900 p-6 rounded-lg shadow-lg">
             <h3 className="text-xl font-semibold">Total Value</h3>
@@ -302,7 +309,7 @@ const Portfolio: React.FC = () => {
                     </td>
                   </tr>
 
-                  {/* Inline Trade Menu Row */}
+                  {/* Inline Trade Menu */}
                   {tradeAction && tradeAction.ticker === holding.ticker && (
                     <tr className="border-t border-gray-800 bg-gray-800">
                       <td colSpan={6} className="py-4 px-4">
@@ -378,7 +385,7 @@ const Portfolio: React.FC = () => {
                     </tr>
                   )}
 
-                  {/* Chart Expansion Row */}
+                  {/* Advanced Chart Row */}
                   {expandedHoldings[holding.ticker] && (
                     <tr className="border-t border-gray-800">
                       <td colSpan={6} className="py-4 px-4">
