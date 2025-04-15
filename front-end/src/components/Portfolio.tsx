@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 
 interface Holding {
   ticker: string;
@@ -137,6 +138,7 @@ const Portfolio: React.FC = () => {
         console.error("Error in fetchPortfolio:", err);
       }
     };
+
     fetchPortfolio();
   }, [apiUrl, userId]);
 
@@ -212,6 +214,13 @@ const Portfolio: React.FC = () => {
         );
         if (res.user && typeof res.user.cashBalance === 'number') {
           setUninvestedCash(res.user.cashBalance);
+          // Update localStorage as well so subsequent calls see the new balance
+          const stored = localStorage.getItem('user_data');
+          if (stored) {
+            const updatedUser = JSON.parse(stored);
+            updatedUser.cashBalance = res.user.cashBalance;
+            localStorage.setItem('user_data', JSON.stringify(updatedUser));
+          }
         }
         closeTradeMenu();
       }
@@ -274,125 +283,121 @@ const Portfolio: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                holdings
-                  .filter(h => h.shares > 0)
-                  .map(holding => (
-                    <React.Fragment key={holding.ticker}>
-                      <tr className="border-t border-gray-800 hover:bg-gray-800/50">
-                        <td className="py-3 px-4 font-medium">{holding.ticker}</td>
-                        <td className="py-3 px-4">${holding.currentPrice.toFixed(2)}</td>
-                        <td className={`py-3 px-4 ${holding.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                          {holding.change >= 0 ? '+' : ''}{holding.change.toFixed(2)}
-                        </td>
-                        <td className="py-3 px-4">{holding.shares}</td>
-                        <td className="py-3 px-4">
-                          <button
-                            onClick={() => toggleChart(holding.ticker)}
-                            className="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded-md text-sm transition"
-                          >
-                            {expandedHoldings[holding.ticker] ? 'Hide Chart' : 'View Chart'}
-                          </button>
-                        </td>
-                        <td className="py-3 px-4 space-x-2">
-                          <button
-                            onClick={() => openTradeMenu(holding.ticker, 'buy')}
-                            className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded-md text-sm transition"
-                          >
-                            Buy
-                          </button>
-                          <button
-                            onClick={() => openTradeMenu(holding.ticker, 'sell')}
-                            className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-sm transition"
-                          >
-                            Sell
-                          </button>
+                holdings.filter(h => h.shares > 0).map(holding => (
+                  <React.Fragment key={holding.ticker}>
+                    <tr className="border-t border-gray-800 hover:bg-gray-800/50">
+                      <td className="py-3 px-4 font-medium">{holding.ticker}</td>
+                      <td className="py-3 px-4">${holding.currentPrice.toFixed(2)}</td>
+                      <td className={`py-3 px-4 ${holding.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        {holding.change >= 0 ? '+' : ''}{holding.change.toFixed(2)}
+                      </td>
+                      <td className="py-3 px-4">{holding.shares}</td>
+                      <td className="py-3 px-4">
+                        <button
+                          onClick={() => toggleChart(holding.ticker)}
+                          className="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded-md text-sm transition"
+                        >
+                          {expandedHoldings[holding.ticker] ? 'Hide Chart' : 'View Chart'}
+                        </button>
+                      </td>
+                      <td className="py-3 px-4 space-x-2">
+                        <button
+                          onClick={() => openTradeMenu(holding.ticker, 'buy')}
+                          className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded-md text-sm transition"
+                        >
+                          Buy
+                        </button>
+                        <button
+                          onClick={() => openTradeMenu(holding.ticker, 'sell')}
+                          className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-sm transition"
+                        >
+                          Sell
+                        </button>
+                      </td>
+                    </tr>
+                    {tradeAction && tradeAction.ticker === holding.ticker && (
+                      <tr className="border-t border-gray-800 bg-gray-800">
+                        <td colSpan={6} className="py-4 px-4">
+                          <div className="flex flex-col space-y-2">
+                            {tradeAction.type === 'buy' ? (
+                              <>
+                                <div className="font-semibold">Buy {holding.ticker}</div>
+                                <div>Available Funds: ${uninvestedCash.toFixed(2)}</div>
+                                <div>Current Price: ${holding.currentPrice.toFixed(2)}</div>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="number"
+                                    value={tradeQuantity}
+                                    onChange={e => setTradeQuantity(Number(e.target.value))}
+                                    className="w-24 p-2 bg-gray-700 rounded"
+                                    min={0}
+                                  />
+                                  <span>shares</span>
+                                </div>
+                                <div>Cost: ${(tradeQuantity * holding.currentPrice).toFixed(2)}</div>
+                                {tradeError && <div className="text-red-500 text-sm">{tradeError}</div>}
+                                <div className="flex space-x-2 mt-2">
+                                  <button
+                                    onClick={() => executeTrade(holding)}
+                                    disabled={tradeLoading}
+                                    className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-md text-sm transition"
+                                  >
+                                    {tradeLoading ? 'Processing...' : 'Confirm'}
+                                  </button>
+                                  <button
+                                    onClick={closeTradeMenu}
+                                    className="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded-md text-sm transition"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <div className="font-semibold">Sell {holding.ticker}</div>
+                                <div>Shares Owned: {holding.shares}</div>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="number"
+                                    value={tradeQuantity}
+                                    onChange={e => setTradeQuantity(Number(e.target.value))}
+                                    className="w-24 p-2 bg-gray-700 rounded"
+                                    min={0}
+                                  />
+                                  <span>shares</span>
+                                </div>
+                                <div>Proceeds: ${(tradeQuantity * holding.currentPrice).toFixed(2)}</div>
+                                {tradeError && <div className="text-red-500 text-sm">{tradeError}</div>}
+                                <div className="flex space-x-2 mt-2">
+                                  <button
+                                    onClick={() => executeTrade(holding)}
+                                    disabled={tradeLoading}
+                                    className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-md text-sm transition"
+                                  >
+                                    {tradeLoading ? 'Processing...' : 'Confirm'}
+                                  </button>
+                                  <button
+                                    onClick={closeTradeMenu}
+                                    className="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded-md text-sm transition"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </td>
                       </tr>
-
-                      {tradeAction && tradeAction.ticker === holding.ticker && (
-                        <tr className="border-t border-gray-800 bg-gray-800">
-                          <td colSpan={6} className="py-4 px-4">
-                            <div className="flex flex-col space-y-2">
-                              {tradeAction.type === 'buy' ? (
-                                <>
-                                  <div className="font-semibold">Buy {holding.ticker}</div>
-                                  <div>Available Funds: ${uninvestedCash.toFixed(2)}</div>
-                                  <div>Current Price: ${holding.currentPrice.toFixed(2)}</div>
-                                  <div className="flex items-center space-x-2">
-                                    <input
-                                      type="number"
-                                      value={tradeQuantity}
-                                      onChange={e => setTradeQuantity(Number(e.target.value))}
-                                      className="w-24 p-2 bg-gray-700 rounded"
-                                      min={0}
-                                    />
-                                    <span>shares</span>
-                                  </div>
-                                  <div>Cost: ${(tradeQuantity * holding.currentPrice).toFixed(2)}</div>
-                                  {tradeError && <div className="text-red-500 text-sm">{tradeError}</div>}
-                                  <div className="flex space-x-2 mt-2">
-                                    <button
-                                      onClick={() => executeTrade(holding)}
-                                      disabled={tradeLoading}
-                                      className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-md text-sm transition"
-                                    >
-                                      {tradeLoading ? 'Processing...' : 'Confirm'}
-                                    </button>
-                                    <button
-                                      onClick={closeTradeMenu}
-                                      className="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded-md text-sm transition"
-                                    >
-                                      Cancel
-                                    </button>
-                                  </div>
-                                </>
-                              ) : (
-                                <>
-                                  <div className="font-semibold">Sell {holding.ticker}</div>
-                                  <div>Shares Owned: {holding.shares}</div>
-                                  <div className="flex items-center space-x-2">
-                                    <input
-                                      type="number"
-                                      value={tradeQuantity}
-                                      onChange={e => setTradeQuantity(Number(e.target.value))}
-                                      className="w-24 p-2 bg-gray-700 rounded"
-                                      min={0}
-                                    />
-                                    <span>shares</span>
-                                  </div>
-                                  <div>Proceeds: ${(tradeQuantity * holding.currentPrice).toFixed(2)}</div>
-                                  {tradeError && <div className="text-red-500 text-sm">{tradeError}</div>}
-                                  <div className="flex space-x-2 mt-2">
-                                    <button
-                                      onClick={() => executeTrade(holding)}
-                                      disabled={tradeLoading}
-                                      className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-md text-sm transition"
-                                    >
-                                      {tradeLoading ? 'Processing...' : 'Confirm'}
-                                    </button>
-                                    <button
-                                      onClick={closeTradeMenu}
-                                      className="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded-md text-sm transition"
-                                    >
-                                      Cancel
-                                    </button>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-
-                      {expandedHoldings[holding.ticker] && (
-                        <tr className="border-t border-gray-800">
-                          <td colSpan={6} className="py-4 px-4">
-                            <AdvancedChart symbol={holding.ticker} />
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  ))
+                    )}
+                    {expandedHoldings[holding.ticker] && (
+                      <tr className="border-t border-gray-800">
+                        <td colSpan={6} className="py-4 px-4">
+                          <AdvancedChart symbol={holding.ticker} />
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))
               )}
             </tbody>
           </table>
