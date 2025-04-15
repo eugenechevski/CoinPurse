@@ -1,103 +1,102 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 const Account: React.FC = () => {
-  const navigate = useNavigate();
-  
-  // Local state for the add money form.
   const [amount, setAmount] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
-  const [success, setSuccess] = useState<string>('');
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
-  // Handles logging out: remove user data and redirect.
   const handleLogout = () => {
     localStorage.removeItem('user_data');
-    navigate('/login');
+    window.location.href = '/login';
   };
 
-  // Handles the form submission to add funds.
-  const handleAddMoney = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddFunds = async () => {
+    setMessage('');
     setError('');
-    setSuccess('');
 
-    // Basic validation: must be a positive number.
     if (amount <= 0) {
       setError('Please enter a valid amount.');
       return;
     }
-    
-    setLoading(true);
+
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
-      const response = await fetch(`${apiUrl}/api/account/add-funds`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ amount })
-      });
-      const res = await response.json();
-      if (res.error) {
-        setError(res.error);
-      } else {
-        setSuccess('Funds added successfully!');
-        // Optionally update local storage with the new cash balance if returned by API.
-        const storedUser = localStorage.getItem('user_data');
-        if (storedUser) {
-          const user = JSON.parse(storedUser);
-          if (res.newCashBalance !== undefined) {
-            user.cashBalance = res.newCashBalance;
-            localStorage.setItem('user_data', JSON.stringify(user));
-          }
-        }
+      // Example API call to your endpoint
+      const storedUser = localStorage.getItem('user_data');
+      if (!storedUser) {
+        setError('User not authenticated.');
+        return;
       }
-    } catch (err: any) {
-      setError('Failed to add funds. Please try again.');
+      const user = JSON.parse(storedUser);
+      const _id = user.id || user._id;
+
+      const res = await fetch(import.meta.env.VITE_API_URL + '/api/auth/updateBalance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ _id, transactionAmount: amount }),
+      });
+      const data = await res.json();
+
+      if (data.error) {
+        setError(data.error);
+      } else {
+        setMessage(`Funds added successfully. New balance: $${data.newBalance.toFixed(2)}`);
+        // Optionally update localStorage user data
+        user.cashBalance = data.newBalance;
+        localStorage.setItem('user_data', JSON.stringify(user));
+      }
+    } catch (err) {
+      setError('Error adding funds. Please try again.');
+      console.error(err);
     }
-    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white">
-      <h1 className="text-4xl font-bold mb-8">My Account</h1>
-      <div className="bg-gray-900 p-8 rounded-lg shadow-lg w-full max-w-md">
-        {/* Log Out Button */}
-        <div className="mb-6">
-          <button 
-            onClick={handleLogout} 
+    <div className="min-h-screen bg-black text-white">
+      {/* Same Nav Bar as Search/Portfolio */}
+      <nav className="bg-gray-900 p-4">
+        <div className="container mx-auto flex justify-between items-center">
+          <h1 className="text-2xl font-bold">CoinPurse</h1>
+          <div className="flex space-x-6">
+            <a href="/portfolio" className="hover:text-green-400 transition" >Portfolio</a>
+            <a href="/search" className="hover:text-green-400 transition">Search</a>
+            <a href="/account" className="text-green-400">Account</a>
+            <a href="/logout" className="hover:text-green-400 transition">Logout</a>
+          </div>
+        </div>
+      </nav>
+
+      <div className="container mx-auto px-4 py-8">
+        <h2 className="text-3xl font-bold mb-6">My Account</h2>
+
+        <div className="bg-gray-900 p-6 rounded-lg w-full max-w-md mx-auto mb-8">
+          {/* Logout Section */}
+          <button
+            onClick={handleLogout}
             className="w-full py-3 bg-red-600 hover:bg-red-700 rounded-md font-medium transition"
           >
             Log Out
           </button>
         </div>
-        
-        {/* Add Funds Form */}
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Add Funds</h2>
-          <form onSubmit={handleAddMoney}>
-            <div className="mb-4">
-              <input 
-                type="number"
-                placeholder="Enter amount"
-                value={amount}
-                onChange={(e) => setAmount(Number(e.target.value))}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                min={0}
-                step="0.01"
-              />
-            </div>
-            {error && <div className="mb-2 text-red-500 text-sm">{error}</div>}
-            {success && <div className="mb-2 text-green-500 text-sm">{success}</div>}
-            <button 
-              type="submit" 
-              disabled={loading}
-              className="w-full py-3 bg-green-600 hover:bg-green-700 rounded-md font-medium transition"
+
+        <div className="bg-gray-900 p-6 rounded-lg w-full max-w-md mx-auto">
+          <h3 className="text-xl font-semibold mb-4">Add Funds</h3>
+          <div className="flex items-center space-x-2 mb-4">
+            <input
+              type="number"
+              value={amount}
+              onChange={e => setAmount(Number(e.target.value))}
+              className="w-full p-2 bg-gray-800 border border-gray-700 rounded-md"
+              placeholder="Enter amount"
+            />
+            <button
+              onClick={handleAddFunds}
+              className="px-3 py-2 bg-green-600 hover:bg-green-700 rounded-md transition"
             >
-              {loading ? 'Processing...' : 'Add Money'}
+              Add
             </button>
-          </form>
+          </div>
+          {message && <p className="text-green-500 mb-2">{message}</p>}
+          {error && <p className="text-red-500 mb-2">{error}</p>}
         </div>
       </div>
     </div>
