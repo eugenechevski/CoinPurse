@@ -296,9 +296,15 @@ app.post("/api/stocks/update", async (req, res) => {
     // add success message
     res.json({ message: `Successfully updated stock position`, stock, user });
   } catch (err) {
-    console.error(err.stack || error);
-    res.status(500).json({ error: "Server error" });
+    console.error("Error saving stock/user:", err.message);
+    if (err.name === 'ValidationError') {
+      for (const field in err.errors) {
+        console.error(`Field: ${field} —`, err.errors[field].message);
+      }
+    }
+    res.status(500).json({ error: err.message });
   }
+  
 });
 
 // Search User's Portfolio for a Stock
