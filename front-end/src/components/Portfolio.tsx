@@ -324,7 +324,9 @@ const Portfolio: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                holdings.map(holding => (
+                holdings
+                .filter(holding=> holding.shares > 0)
+                .map(holding => (
                   <React.Fragment key={holding.ticker}>
                     <tr className="border-t border-gray-800 hover:bg-gray-800/50">
                       <td className="py-3 px-4 font-medium">{holding.ticker}</td>
