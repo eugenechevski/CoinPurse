@@ -252,7 +252,7 @@ app.post("/api/stocks/update", async (req, res) => {
         // if they don't already own it, create a new one
         // TODO: Do we need to keep track of company name and sector here?
         stock = new Stock({
-          userId: _id,
+          userId,
           symbol,
           moneyInvested: totalAmount,
           unitsOwned: units,
