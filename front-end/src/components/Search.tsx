@@ -280,7 +280,7 @@ function Search() {
           localStorage.setItem('user_data', JSON.stringify(updatedUser));
 
           // Success message and reset
-          alert(`Successfully purchased ${quantity} shares of ${selectedStock} for $${totalCost.toFixed(2)}`);
+          // alert(`Successfully purchased ${quantity} shares of ${selectedStock} for $${totalCost.toFixed(2)}`);
           setQuantity(1);
           setSelectedStock(null);
 
@@ -397,6 +397,7 @@ function Search() {
           <div className="flex space-x-6">
             <a href="/portfolio" className="hover:text-green-400 transition">Portfolio</a>
             <a href="/search" className="text-green-400">Search</a>
+            <a href="/account" className="hover:text-green-400 transition">Account</a>
             <a href="/logout" className="hover:text-green-400 transition">Logout</a>
           </div>
         </div>
