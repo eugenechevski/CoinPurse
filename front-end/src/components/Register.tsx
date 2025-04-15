@@ -1,5 +1,21 @@
 import React, { useState } from 'react';
 
+// Debug mode: 1 = enable console logs, 0 = disable console logs
+const DEBUG_MODE = 1;
+
+// Debug logger function that only logs when debug mode is enabled
+const debugLog = (type: 'log' | 'error' | 'warn', ...args: any[]) => {
+  if (DEBUG_MODE) {
+    if (type === 'error') {
+      console.error(...args);
+    } else if (type === 'warn') {
+      console.warn(...args);
+    } else {
+      console.log(...args);
+    }
+  }
+};
+
 function Register() {
   const [message, setMessage] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -8,12 +24,17 @@ function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   async function doRegister(event: React.FormEvent): Promise<void> {
     event.preventDefault();
+    setIsLoading(true);
+    setMessage('');
 
+    // Validate passwords match
     if (password !== confirmPassword) {
       setMessage('Passwords do not match');
+      setIsLoading(false);
       return;
     }
 
@@ -26,44 +47,65 @@ function Register() {
     };
     const js = JSON.stringify(obj);
 
+    // Log input being sent to API
+    debugLog('log', 'Input to API:', obj);
+
+    const apiRoute = import.meta.env.VITE_API_URL + '/api/auth/addUser';
+    debugLog('log', 'API Route:', apiRoute);
+
     try {
-      const response = await fetch(import.meta.env.VITE_API_URL + '/api/auth/addUser', {
+      const response = await fetch(apiRoute, {
         method: 'POST',
         body: js,
         headers: { 'Content-Type': 'application/json' }
       });
 
-      const res = JSON.parse(await response.text());
+      const rawText = await response.text();
+      debugLog('log', 'Raw API Response:', rawText);
+      let res;
+
+      try {
+        res = JSON.parse(rawText);
+        debugLog('log', 'Parsed API Response:', res);
+      } catch (parseError) {
+        debugLog('error', 'JSON parse error:', parseError);
+        setMessage('Server returned invalid data. Please try again later.');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!response.ok) {
+        debugLog('log', 'Response not OK. Status:', response.status);
+        throw new Error(res.error || 'Registration failed');
+      }
+
       if (res.error) {
         setMessage(res.error);
-      } else {
-        setMessage('Registration successful! You can now login.');
-        // Clear the form
-        setFirstName('');
-        setLastName('');
-        setLoginName('');
-        setEmail('');
-        setPassword('');
-        setConfirmPassword('');
-      }
-      if (res.userID) {
+        setIsLoading(false);
+      } else if (res._id) {
         const user = {
-          firstName: res.firstName,
-          lastName: res.lastName,
-          id: res.userID,
-          cashBalance: res.cashBalance
+          firstName: firstName,
+          lastName: lastName,
+          id: res._id,
+          cashBalance: res.cashBalance || 0
         };
 
+        debugLog('log', 'User data being stored:', user);
         localStorage.setItem('user_data', JSON.stringify(user));
-        setMessage('');
-        window.location.href = '/portfolio';
+        debugLog('log', 'Redirecting to portfolio page');
+        setTimeout(() => {
+          window.location.href = '/portfolio';
+        }, 2000);
       } else {
         setMessage('Registration failed. Please try again.');
-      }
 
+      }
     } catch (error: any) {
-      setMessage(error.toString());
-      return;
+      debugLog('error', 'Registration error:', error);
+      setMessage(error.message || error.toString());
+    } finally {
+      setIsLoading(false);
+      debugLog('log', 'Registration process completed');
     }
   };
 
@@ -94,6 +136,7 @@ function Register() {
                   className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="John"
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -109,6 +152,7 @@ function Register() {
                   className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Doe"
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -125,6 +169,7 @@ function Register() {
                 className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="johndoe"
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -140,6 +185,7 @@ function Register() {
                 className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="john.doe@example.com"
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -155,6 +201,8 @@ function Register() {
                 className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Create a strong password"
                 required
+                disabled={isLoading}
+                minLength={6}
               />
             </div>
 
@@ -170,6 +218,8 @@ function Register() {
                 className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Confirm your password"
                 required
+                disabled={isLoading}
+                minLength={6}
               />
             </div>
 
@@ -184,9 +234,10 @@ function Register() {
 
             <button
               type="submit"
-              className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 rounded-md text-white font-medium transition duration-200"
+              className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 rounded-md text-white font-medium transition duration-200 disabled:bg-green-800 disabled:cursor-not-allowed"
+              disabled={isLoading}
             >
-              Create Account
+              {isLoading ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
 
