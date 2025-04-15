@@ -235,7 +235,7 @@ app.post("/api/stocks/update", async (req, res) => {
 
     const mongoose = require('mongoose');
     const userId = typeof _id === 'string' ? new mongoose.Types.ObjectId(_id) : _id;
-    let stock = await Stock.findOne({ userId: _id, symbol });
+    let stock = await Stock.findOne({ userId, symbol });
 
 
 
