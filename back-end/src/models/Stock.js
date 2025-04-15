@@ -61,7 +61,7 @@ const stockSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Create a compound index on userId and symbol to ensure uniqueness
-stockSchema.index({ userId: 1, symbol: 1 }, { unique: true });
+//stockSchema.index({ userId: 1, symbol: 1 }, { unique: true });
 
 // Method to calculate average cost basis
 stockSchema.methods.calculateAverageCostBasis = function() {
