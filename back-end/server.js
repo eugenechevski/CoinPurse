@@ -234,8 +234,8 @@ app.post("/api/stocks/update", async (req, res) => {
     const totalAmount = price * units;
 
     const mongoose = require('mongoose');
-    const userID = typeof _id === 'string' ? new mongoose.Types.ObjectId(_id) : _id;
-    let stock = await Stock.findOne({ userID, symbol });
+    const userId = typeof _id === 'string' ? new mongoose.Types.ObjectId(_id) : _id;
+    let stock = await Stock.findOne({ userId, symbol });
 
 
 
@@ -252,7 +252,7 @@ app.post("/api/stocks/update", async (req, res) => {
         // if they don't already own it, create a new one
         // TODO: Do we need to keep track of company name and sector here?
         stock = new Stock({
-          userID,
+          userId,
           symbol,
           moneyInvested: totalAmount,
           unitsOwned: units,
