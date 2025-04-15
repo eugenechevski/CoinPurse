@@ -9,10 +9,10 @@ function Wallet() {
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold">CoinPurse</h1>
           <div className="flex space-x-6">
-            <a href="/portfolio" className="hover:text-green-400 transition">Portfolio</a>
-            <a href="/search" className="text-green-400">Search</a>
-            <a href="/wallet" className="hover:text-green-400 transition">Wallet</a>
-            <a href="/logout" className="hover:text-green-400 transition">Logout</a>
+            <a href="/portfolio" className="hover:text-[#049981] transition">Portfolio</a>
+            <a href="/search" className="text-[#049981]">Search</a>
+            <a href="/wallet" className="hover:text-[#049981] transition">Wallet</a>
+            <a href="/logout" className="hover:text-[#049981] transition">Logout</a>
           </div>
         </div>
       </nav>

@@ -53,14 +53,14 @@ const Account: React.FC = () => {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Same Nav Bar as Search/Portfolio */}
-      <nav className="bg-gray-900 p-4">
+      <nav className="bg-black p-4">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold">CoinPurse</h1>
           <div className="flex space-x-6">
-            <a href="/portfolio" className="hover:text-green-400 transition" >Portfolio</a>
-            <a href="/search" className="hover:text-green-400 transition">Search</a>
-            <a href="/account" className="text-green-400">Account</a>
-            <a href="/logout" className="hover:text-green-400 transition">Logout</a>
+            <a href="/portfolio" className="hover:text-[#049981] transition" >Portfolio</a>
+            <a href="/search" className="hover:text-[#049981] transition">Search</a>
+            <a href="/account" className="text-[#049981]">Account</a>
+            <a href="/logout" className="hover:text-[#049981] transition">Logout</a>
           </div>
         </div>
       </nav>
@@ -90,12 +90,12 @@ const Account: React.FC = () => {
             />
             <button
               onClick={handleAddFunds}
-              className="px-3 py-2 bg-green-600 hover:bg-green-700 rounded-md transition"
+              className="px-3 py-2 bg-[#049981] hover:bg-[#038371] hover:text-gray-800 rounded-md transition"
             >
               Add
             </button>
           </div>
-          {message && <p className="text-green-500 mb-2">{message}</p>}
+          {message && <p className="text-[#049981] mb-2">{message}</p>}
           {error && <p className="text-red-500 mb-2">{error}</p>}
         </div>
       </div>

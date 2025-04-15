@@ -233,14 +233,14 @@ const Portfolio: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <nav className="bg-gray-900 p-4">
+      <nav className="bg-black p-4">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold">CoinPurse</h1>
-          <div className="flex space-x-6">
-            <a href="/portfolio" className="text-green-400">Portfolio</a>
-            <a href="/search" className="hover:text-green-400 transition">Search</a>
-            <a href="/account" className="hover:text-green-400 transition">Account</a>
-            <a href="/logout" className="hover:text-green-400 transition">Logout</a>
+          <div className="flex space-x-6 ">
+            <a href="/portfolio" className="text-[#049981]">Portfolio</a>
+            <a href="/search" className="hover:text-[#049981] transition">Search</a>
+            <a href="/account" className="hover:text-[#049981] transition">Account</a>
+            <a href="/logout" className="hover:text-[#049981] transition">Logout</a>
           </div>
         </div>
       </nav>
@@ -253,7 +253,7 @@ const Portfolio: React.FC = () => {
           </div>
           <div className="bg-gray-900 p-6 rounded-lg shadow-lg">
             <h3 className="text-xl font-semibold">Change</h3>
-            <p className={`text-2xl font-bold ${change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            <p className={`text-2xl font-bold ${change >= 0 ? 'text-[#049981]' : 'text-red-500'}`}>
               {change >= 0 ? '+' : ''}{change.toFixed(2)}
             </p>
           </div>
@@ -288,7 +288,7 @@ const Portfolio: React.FC = () => {
                     <tr className="border-t border-gray-800 hover:bg-gray-800/50">
                       <td className="py-3 px-4 font-medium">{holding.ticker}</td>
                       <td className="py-3 px-4">${holding.currentPrice.toFixed(2)}</td>
-                      <td className={`py-3 px-4 ${holding.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      <td className={`py-3 px-4 ${holding.change >= 0 ? 'text-[#049981]' : 'text-red-500'}`}>
                         {holding.change >= 0 ? '+' : ''}{holding.change.toFixed(2)}
                       </td>
                       <td className="py-3 px-4">{holding.shares}</td>
@@ -303,7 +303,7 @@ const Portfolio: React.FC = () => {
                       <td className="py-3 px-4 space-x-2">
                         <button
                           onClick={() => openTradeMenu(holding.ticker, 'buy')}
-                          className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded-md text-sm transition"
+                          className="px-3 py-1 bg-[#049981] hover:bg-[#038371] rounded-md text-sm transition"
                         >
                           Buy
                         </button>

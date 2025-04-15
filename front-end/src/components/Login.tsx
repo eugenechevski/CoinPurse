@@ -87,7 +87,7 @@ function Login() {
                 id="loginName"
                 value={loginName}
                 onChange={(e) => setLoginName(e.target.value)}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-[#049981]"
                 placeholder="Enter your username"
                 required
               />
@@ -102,7 +102,7 @@ function Login() {
                 id="loginPassword"
                 value={loginPassword}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-[#049981]"
                 placeholder="Enter your password"
                 required
               />
@@ -116,14 +116,14 @@ function Login() {
 
             <button
               type="submit"
-              className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 rounded-md text-white font-medium transition duration-200"
+              className="w-full py-3 px-4 bg-[#049981] hover:text-gray-800 hover:bg-[#038371] rounded-md text-white font-medium transition duration-200"
             >
               Sign In
             </button>
           </form>
 
           <div className="mt-6 text-center">
-            <a href="/register" className="text-green-500 hover:text-green-400 text-sm">
+            <a href="/register" className="text-[#049981] hover:text-[#049981] text-sm">
               Don't have an account? Register now
             </a>
           </div>

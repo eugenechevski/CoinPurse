@@ -133,7 +133,7 @@ function Register() {
                   id="firstName"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-[#049981]"
                   placeholder="John"
                   required
                   disabled={isLoading}
@@ -149,7 +149,7 @@ function Register() {
                   id="lastName"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-[#049981]"
                   placeholder="Doe"
                   required
                   disabled={isLoading}
@@ -166,7 +166,7 @@ function Register() {
                 id="loginName"
                 value={loginName}
                 onChange={(e) => setLoginName(e.target.value)}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-[#049981]"
                 placeholder="johndoe"
                 required
                 disabled={isLoading}
@@ -182,7 +182,7 @@ function Register() {
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-[#049981]"
                 placeholder="john.doe@example.com"
                 required
                 disabled={isLoading}
@@ -198,7 +198,7 @@ function Register() {
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-[#049981]"
                 placeholder="Create a strong password"
                 required
                 disabled={isLoading}
@@ -215,7 +215,7 @@ function Register() {
                 id="confirmPassword"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-[#049981]"
                 placeholder="Confirm your password"
                 required
                 disabled={isLoading}
@@ -234,7 +234,7 @@ function Register() {
 
             <button
               type="submit"
-              className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 rounded-md text-white font-medium transition duration-200 disabled:bg-green-800 disabled:cursor-not-allowed"
+              className="w-full py-3 px-4 bg-[#049981] hover:text-gray-800 hover:bg-[#038371] rounded-md text-white font-medium transition duration-200 disabled:bg-green-800 disabled:cursor-not-allowed"
               disabled={isLoading}
             >
               {isLoading ? 'Creating Account...' : 'Create Account'}
@@ -242,7 +242,7 @@ function Register() {
           </form>
 
           <div className="mt-6 text-center">
-            <a href="/login" className="text-green-500 hover:text-green-400 text-sm">
+            <a href="/login" className="text-[#049981] hover:text-[#049981] text-sm">
               Already have an account? Sign in
             </a>
           </div>
