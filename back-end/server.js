@@ -234,9 +234,9 @@ app.post("/api/stocks/update", async (req, res) => {
     const totalAmount = price * units;
 
     const mongoose = require('mongoose');
-    const userId = mongoose.Types.ObjectId(_id);
-
+    const userId = new mongoose.Types.ObjectId(_id);
     let stock = await Stock.findOne({ userId, symbol });
+
 
 
     // buy action
