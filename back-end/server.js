@@ -296,7 +296,7 @@ app.post("/api/stocks/update", async (req, res) => {
     // add success message
     res.json({ message: `Successfully updated stock position`, stock, user });
   } catch (err) {
-    console.error(err);
+    console.error(err.stack || error);
     res.status(500).json({ error: "Server error" });
   }
 });
