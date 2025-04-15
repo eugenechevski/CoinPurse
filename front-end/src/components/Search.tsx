@@ -330,7 +330,7 @@ function Search() {
 
             <div className="mb-4">
               <p className="text-gray-400 mb-1">Day Change</p>
-              <p className={`text - lg font - medium ${(quote.d || 0) >= 0 ? 'text-green-500' : 'text-red-500'} `}>
+              <p className={`text - lg font - medium ${(quote.d || 0) >= 0 ? 'text-[#049981]' : 'text-red-500'} `}>
                 ${(quote.d || 0).toFixed(2)} ({(quote.dp || 0).toFixed(2)}%)
               </p>
             </div>
@@ -357,7 +357,7 @@ function Search() {
                 step="1"
                 value={quantity}
                 onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-[#049981]"
               />
             </div>
 
@@ -366,7 +366,7 @@ function Search() {
               <p className="text-xl font-bold">${totalCost.toFixed(2)}</p>
 
               {user && (
-                <p className={`text - sm mt - 1 ${canAfford ? 'text-green-500' : 'text-red-500'} `}>
+                <p className={`text - sm mt - 1 ${canAfford ? 'text-[#049981]' : 'text-red-500'} `}>
                   {canAfford
                     ? `Available: $${userBalance.toFixed(2)} `
                     : `Insufficient funds.You need $${(totalCost - userBalance).toFixed(2)} more.`}
@@ -378,7 +378,7 @@ function Search() {
               onClick={confirmPurchase}
               disabled={!canAfford || !user}
               className={`w - full py - 3 px - 4 rounded - md text - white font - medium transition duration - 200 
-                ${canAfford ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 cursor-not-allowed'} `}
+                ${canAfford ? 'bg-green-600 hover:bg-[#038371]' : 'bg-gray-700 cursor-not-allowed'} `}
             >
               {user ? 'Confirm Purchase' : 'Login to Buy'}
             </button>
@@ -391,14 +391,14 @@ function Search() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Navigation */}
-      <nav className="bg-gray-900 p-4">
+      <nav className="bg-black p-4">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold">CoinPurse</h1>
           <div className="flex space-x-6">
-            <a href="/portfolio" className="hover:text-green-400 transition">Portfolio</a>
-            <a href="/search" className="text-green-400">Search</a>
-            <a href="/account" className="hover:text-green-400 transition">Account</a>
-            <a href="/logout" className="hover:text-green-400 transition">Logout</a>
+            <a href="/portfolio" className="hover:text-[#049981] transition">Portfolio</a>
+            <a href="/search" className="text-[#049981]">Search</a>
+            <a href="/account" className="hover:text-[#049981] transition">Account</a>
+            <a href="/logout" className="hover:text-[#049981] transition">Logout</a>
           </div>
         </div>
       </nav>
@@ -418,11 +418,11 @@ function Search() {
                   setSearchTerm(e.target.value);
                 }}
                 placeholder="Search by company name or symbol"
-                className="flex-grow p-4 bg-gray-800 border border-gray-700 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="flex-grow p-4 bg-gray-800 border border-gray-700 rounded-l-md focus:outline-none focus:ring-2 focus:ring-[#049981]"
               />
               <button
                 type="submit"
-                className="px-6 bg-green-600 hover:bg-green-700 rounded-r-md font-medium transition"
+                className="px-6 bg-[#049981] hover:text-gray-800 hover:bg-[#038371] rounded-r-md font-medium transition"
               >
                 Search
               </button>
@@ -432,7 +432,7 @@ function Search() {
           {/* Search Results Section */}
           {isLoading && (
             <div className="text-center py-8">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#049981]"></div>
               <p className="mt-2 text-gray-400">Searching...</p>
             </div>
           )}
@@ -469,7 +469,7 @@ function Search() {
                           : 'Loading...'}
                       </td>
                       <td className={`py - 3 px - 4 ${quotes[stock.symbol] && quotes[stock.symbol].d != null && quotes[stock.symbol].d >= 0
-                        ? 'text-green-500'
+                        ? 'text-[#049981]'
                         : quotes[stock.symbol] && quotes[stock.symbol].d != null ? 'text-red-500' : ''
                         } `}>
                         {quotes[stock.symbol] && quotes[stock.symbol].d != null
@@ -479,7 +479,7 @@ function Search() {
                       <td className="py-3 px-4">
                         <button
                           onClick={() => handleBuyStock(stock.symbol)}
-                          className="px-4 py-1 bg-green-600 hover:bg-green-700 rounded-md text-sm transition"
+                          className="px-4 py-1 bg-[#049981] hover:bg-[#038371] rounded-md text-sm transition"
                         >
                           Buy
                         </button>
